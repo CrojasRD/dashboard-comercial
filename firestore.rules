@@ -1,0 +1,28 @@
+rules_version = '2';
+
+// Reglas de seguridad de Firestore para OroCash Dashboard.
+//
+// - "directory": solo mapea usuario -> email para poder iniciar sesión.
+//   Lectura pública (no incluye contraseñas ni datos sensibles).
+//   Escritura bloqueada: solo el backend (Vercel + Firebase Admin SDK) puede escribir aquí.
+// - "content": toda la información del dashboard (tareas, ventas, pauta, eventos,
+//   proyectos, perfiles de usuario, jara, mariela). Solo usuarios autenticados
+//   (empleados que iniciaron sesión con Firebase Auth) pueden leer y escribir.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /directory/{userId} {
+      allow read: if true;
+      allow write: if false; // solo vía Admin SDK desde las funciones en /api
+    }
+
+    match /content/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Cualquier otra colección: denegado por defecto.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

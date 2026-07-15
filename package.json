@@ -1,0 +1,12 @@
+{
+  "name": "orocash-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OroCash - Sistema de Gestión Comercial (dashboard estático + Firebase + APIs en Vercel)",
+  "scripts": {
+    "seed": "node scripts/seed.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.1.0"
+  }
+}
