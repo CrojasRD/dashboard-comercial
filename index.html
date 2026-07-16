@@ -405,6 +405,10 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
       <div class="ni" onclick="navTo('vitrinimos',this)" data-v="vitrinimos" data-key="vitrinimos">
         <span class="ni-ico">🪞</span>Exhibidores & Rutas
       </div>
+      <div class="sb-lbl" id="lbl-fotografia">Fotografía</div>
+      <div class="ni" onclick="navTo('fotografia',this)" data-v="fotografia" data-key="fotografia">
+        <span class="ni-ico">📷</span>Mis Trabajos
+      </div>
       <div class="sb-lbl" id="lbl-equipo">Equipo</div>
       <div class="ni" onclick="navTo('perfiles',this)" data-v="perfiles" data-key="perfiles">
         <span class="ni-ico">👥</span><span id="nav-perfiles-lbl">Ver perfiles</span>
@@ -677,6 +681,25 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
       </div>
 
       <!-- DESGLOSE JOYAS -->
+      <!-- FOTOGRAFÍA — Registro de Trabajos -->
+      <div class="view" id="v-fotografia">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+          <span class="view-title" style="margin:0">📷 Mis Trabajos</span>
+          <button class="btn-add" onclick="openTrabajo(CU.id)">+ Registrar período</button>
+        </div>
+        <!-- Calendar nav -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+          <button class="btn-sm-out" onclick="fotoCalNav(-1)">‹</button>
+          <span id="foto-cal-title" style="font-size:14px;font-weight:700;min-width:160px;text-align:center;color:var(--yellow)"></span>
+          <button class="btn-sm-out" onclick="fotoCalNav(1)">›</button>
+        </div>
+        <!-- Calendar grid -->
+        <div id="foto-cal-grid" style="margin-bottom:28px;background:var(--bg2);border:1px solid var(--bord);border-radius:14px;padding:18px"></div>
+        <!-- Periods list -->
+        <div style="font-size:13px;font-weight:700;color:var(--yellow);margin-bottom:12px">📋 Períodos Registrados</div>
+        <div id="foto-periodos-list"></div>
+      </div>
+
       <div class="view" id="v-joyas">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
           <span class="view-title" style="margin:0">💎 Desglose de Joyas Vendidas</span>
@@ -1280,7 +1303,7 @@ const USERS = [
   {id:'obueno',    name:'Omairo Bueno',     role:'Sub-Gerente Comercial',  ini:'OB',col:'#0c3260', badge:true, pass:'omairo2026',   email:'obueno@orocash.ec',   nav:['tablero','proyectos','eventos','camion','perfiles','ventas','social','pauteo','presupuesto']},
   {id:'dchoez',    name:'David Choez',      role:'Director de Marca',      ini:'DC',col:'#1a4f96', badge:true, pass:'david2026',    email:'dchoez@orocash.ec',   nav:['tablero','proyectos','eventos','camion','perfiles','ventas','social','pauteo','presupuesto']},
   {id:'amolineros',name:'Angel Molineros',  role:'Asistente de Marketing', ini:'AM',col:'#2563eb', badge:false,pass:'angel2026',    email:'amolineros@orocash.ec',nav:['tablero','proyectos','eventos','perfiles','presupuesto']},
-  {id:'ipacheco',  name:'Israel Pacheco',   role:'Fotografía',             ini:'IP',col:'#d97706', badge:false,pass:'israel2026',   email:'ipacheco@orocash.ec', nav:['tablero','eventos','perfiles']},
+  {id:'ipacheco',  name:'Israel Pacheco',   role:'Fotografía',             ini:'IP',col:'#d97706', badge:false,pass:'israel2026',   email:'ipacheco@orocash.ec', nav:['tablero','eventos','fotografia','perfiles']},
   {id:'agarcia',   name:'Arturo García',    role:'Prod. Audiovisual',      ini:'AG',col:'#7c3aed', badge:false,pass:'arturo2026',   email:'agarcia@orocash.ec',  nav:['tablero','eventos','perfiles']},
   {id:'gpalma',    name:'Gustavo Palma',    role:'Diseñador',              ini:'GP',col:'#059669', badge:false,pass:'gustavo2026',  email:'gpalma@orocash.ec',   nav:['tablero','eventos','perfiles']},
   {id:'gbarzola',  name:'Gissella Barzola', role:'Diseñadora',             ini:'GB',col:'#0891b2', badge:false,pass:'gissella2026', email:'gbarzola@orocash.ec', nav:['tablero','eventos','perfiles']},
@@ -1288,7 +1311,7 @@ const USERS = [
   {id:'mgarcia',   name:'Mariela García',   role:'Jefa de Ventas',         ini:'MG',col:'#16a34a', badge:false,pass:'mariela2026',  email:'mgarcia@orocash.ec',  nav:['tablero','eventos','ventas','perfiles']},
   {id:'kescobar',  name:'Katherine Escobar',role:'Ventas Online',          ini:'KE',col:'#0284c7', badge:false,pass:'katherine2026',email:'gventas1@orocash.ec', nav:['tablero','eventos','ventas','joyas','perfiles']},
   {id:'emendoza',  name:'Eddy Mendoza',     role:'Publicidad Móvil',       ini:'EM',col:'#475569', badge:false,pass:'eddy2026',     email:'emendoza@orocash.ec', nav:['tablero','eventos','camion','perfiles']},
-  {id:'mmontoya',  name:'Miguel Montoya',   role:'Fotografía',             ini:'MM',col:'#b45309', badge:false,pass:'miguel2026',   email:'—',                   nav:['tablero','eventos','perfiles']},
+  {id:'mmontoya',  name:'Miguel Montoya',   role:'Fotografía',             ini:'MM',col:'#b45309', badge:false,pass:'miguel2026',   email:'—',                   nav:['tablero','eventos','fotografia','perfiles']},
   {id:'jjara',     name:'Jaqueline Jara',   role:'Vitrinismo',             ini:'JJ',col:'#be185d', badge:false,pass:'jaqueline2026',email:'—',                   nav:['tablero','eventos','vitrinimos','perfiles']},
 ];
 
@@ -1633,10 +1656,12 @@ function applyNavAccess(){
   const hasM=isAdmin||mKeys.some(k=>CU.nav.includes(k));
   const hasV=isAdmin||CU.nav.includes('vitrinimos');
   const hasP=isAdmin||CU.nav.includes('presupuesto');
+  const hasF=isAdmin||CU.nav.includes('fotografia');
   document.getElementById('lbl-gestion').style.display=hasG?'block':'none';
   document.getElementById('lbl-metricas').style.display=hasM?'block':'none';
   document.getElementById('lbl-vitrinimos').style.display=hasV?'block':'none';
   document.getElementById('lbl-presupuesto').style.display=hasP?'block':'none';
+  document.getElementById('lbl-fotografia').style.display=hasF?'block':'none';
 }
 
 // ════════════════════════════════════
@@ -1651,6 +1676,7 @@ function navTo(view,el){
   if(view==='joyas') renderJoyas();
   if(view==='presupuesto') renderPresupuesto();
   if(view==='camion') renderCamionActividades();
+  if(view==='fotografia') renderFotografiaView();
 }
 
 // ════════════════════════════════════
@@ -3250,6 +3276,7 @@ function guardarTrabajo(){
   ['tj-desc','tj-inicio','tj-fin'].forEach(id=>document.getElementById(id).value='');
   closeM('m-trabajo-foto');
   if(uid==='jjara') renderJaraExhibidores();
+  else if(FOTO_IDS.includes(uid)) renderFotografiaView();
   else renderTrabajoPeriodos(uid,'trabajo-list-'+uid);
   persistTrabajo();
 }
@@ -3640,6 +3667,87 @@ async function persistCamion(){try{await db.collection('content').doc('camion').
 // ════════════════════════════════════
 // FIRESTORE — LOAD ALL
 // ════════════════════════════════════
+// ════════════════════════════════════
+// FOTOGRAFÍA — Vista de trabajos
+// ════════════════════════════════════
+let fotoCalY=new Date().getFullYear(), fotoCalM=new Date().getMonth();
+const MESES_FOTO=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DIAS_FOTO=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+function fotoCalNav(dir){
+  fotoCalM+=dir;
+  if(fotoCalM>11){fotoCalM=0;fotoCalY++;}
+  if(fotoCalM<0){fotoCalM=11;fotoCalY--;}
+  renderFotografiaView();
+}
+
+function renderFotografiaView(){
+  if(!CU) return;
+  const uid=CU.id;
+  // Title
+  const title=document.getElementById('foto-cal-title');
+  if(title) title.textContent=`${MESES_FOTO[fotoCalM]} ${fotoCalY}`;
+  // Build set of worked dates this month
+  const periodos=TRABAJO_PERIODOS.filter(p=>p.userId===uid);
+  const workedDates=new Set();
+  periodos.forEach(p=>{
+    let d=new Date(p.fInicio+'T00:00:00');
+    const fin=new Date(p.fFin+'T00:00:00');
+    while(d<=fin){
+      workedDates.add(d.toISOString().slice(0,10));
+      d.setDate(d.getDate()+1);
+    }
+  });
+  // Days worked this month count
+  const daysThisMonth=Array.from(workedDates).filter(ds=>ds.startsWith(`${fotoCalY}-${String(fotoCalM+1).padStart(2,'0')}`)).length;
+  // Calendar
+  const firstDay=new Date(fotoCalY,fotoCalM,1).getDay();
+  const dim=new Date(fotoCalY,fotoCalM+1,0).getDate();
+  const dimPrev=new Date(fotoCalY,fotoCalM,0).getDate();
+  const today=new Date();
+  let html=`<div style="margin-bottom:12px;font-size:12px;color:var(--muted)">
+    ${daysThisMonth>0?`<span style="color:var(--yellow);font-weight:700">${daysThisMonth} días trabajados</span> este mes`:'Sin días registrados este mes'}
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:6px">
+    ${DIAS_FOTO.map(d=>`<div style="text-align:center;font-size:10px;font-weight:700;color:var(--muted);padding:5px 0">${d}</div>`).join('')}
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">`;
+  for(let i=firstDay-1;i>=0;i--)
+    html+=`<div style="padding:8px 4px;text-align:center;font-size:11px;color:var(--muted);opacity:.3">${dimPrev-i}</div>`;
+  for(let d=1;d<=dim;d++){
+    const ds=`${fotoCalY}-${String(fotoCalM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const worked=workedDates.has(ds);
+    const isToday=today.getFullYear()===fotoCalY&&today.getMonth()===fotoCalM&&today.getDate()===d;
+    html+=`<div style="padding:8px 4px;border-radius:8px;text-align:center;font-size:12px;font-weight:${isToday?'800':'500'};
+      background:${worked?'var(--yellow)':isToday?'var(--blue2)':'var(--bg3)'};
+      color:${worked?'#0c3260':isToday?'var(--yellow)':'var(--text)'};
+      border:1px solid ${worked?'var(--yellow)':isToday?'var(--yellow)':'var(--bord)'}">${d}</div>`;
+  }
+  html+=`</div>`;
+  const grid=document.getElementById('foto-cal-grid');
+  if(grid) grid.innerHTML=html;
+  // Periods list
+  const listEl=document.getElementById('foto-periodos-list');
+  if(!listEl) return;
+  if(!periodos.length){
+    listEl.innerHTML='<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Sin períodos registrados. Usa el botón de arriba para agregar.</div>';
+    return;
+  }
+  listEl.innerHTML=[...periodos].reverse().map(p=>`
+    <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 16px;background:var(--bg3);border:1px solid var(--bord);border-radius:10px;margin-bottom:8px">
+      <span style="font-size:20px;flex-shrink:0">📸</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700">${p.desc}</div>
+        <div style="font-size:11px;color:var(--yellow);margin-top:3px">
+          ${fmtDate(p.fInicio)} → ${fmtDate(p.fFin)}
+          <span style="color:var(--muted)"> · ${diasEntre(p.fInicio,p.fFin)} días</span>
+        </div>
+      </div>
+      <button onclick="TRABAJO_PERIODOS.splice(TRABAJO_PERIODOS.findIndex(x=>x.id===${p.id}),1);renderFotografiaView();persistTrabajo()"
+        style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:14px;flex-shrink:0">🗑</button>
+    </div>`).join('');
+}
+
 // ════════════════════════════════════
 // TRABAJO CALENDAR — Fotógrafos tablero
 // ════════════════════════════════════
