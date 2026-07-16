@@ -730,25 +730,51 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
 
       <!-- SOCIAL MEDIA -->
       <div class="view" id="v-social">
-        <div class="view-title">Social Media / Campañas</div>
-        <div class="kpi-grid">
-          <div class="kpi"><div class="kpi-lbl">Alcance Total</div><div class="kpi-val" style="color:var(--cyan)">171K</div><div class="kpi-sub" style="opacity:0">—</div></div>
-          <div class="kpi"><div class="kpi-lbl">Seguidores</div><div class="kpi-val" style="color:var(--teal)">48.3K</div><div class="kpi-sub"><span class="up">↑ +340</span> esta semana</div></div>
-          <div class="kpi"><div class="kpi-lbl">Inversión Activa</div><div class="kpi-val" style="color:var(--yellow)">$1.430</div><div class="kpi-sub" style="opacity:0">—</div></div>
-          <div class="kpi"><div class="kpi-lbl">Conversiones</div><div class="kpi-val" style="color:var(--green)">124</div><div class="kpi-sub" style="opacity:0">—</div></div>
-          <div class="kpi"><div class="kpi-lbl">CTR Prom.</div><div class="kpi-val" style="color:var(--purple)">2.7%</div><div class="kpi-sub" style="opacity:0">—</div></div>
-          <div class="kpi"><div class="kpi-lbl">Publ. Programadas</div><div class="kpi-val" style="color:var(--orange)">12</div><div class="kpi-sub" style="opacity:0">—</div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+          <span class="view-title" style="margin:0">📣 Gestor de Contenido</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn-sm-out" onclick="openM('m-campana')" id="btn-new-camp" style="display:none">+ Campaña</button>
+            <button class="btn-add" onclick="openM('m-contenido')" id="btn-new-cont" style="display:none">+ Nuevo Contenido</button>
+          </div>
         </div>
-        <div class="dcard">
-          <div class="dcard-head"><span>📊 Campañas Activas</span></div>
-          <table class="dt">
-            <thead><tr><th>Campaña</th><th>Plataforma</th><th>Presupuesto</th><th>Alcance</th><th>CTR</th><th>Estado</th></tr></thead>
-            <tbody>
-              <tr><td style="font-weight:700">Facebook Ads — Verano</td><td style="color:var(--muted)">Facebook</td><td><div class="bud-val">$420 / $800</div><div class="bud-bar"><div class="bud-fill" style="width:52.5%"></div></div></td><td>45,200</td><td>2.7%</td><td><span class="badge bg-green">Activa</span></td></tr>
-              <tr><td style="font-weight:700">Instagram Stories Q3</td><td style="color:var(--muted)">Instagram</td><td><div class="bud-val">$210 / $600</div><div class="bud-bar"><div class="bud-fill" style="width:35%"></div></div></td><td>28,400</td><td>3.1%</td><td><span class="badge bg-green">Activa</span></td></tr>
-              <tr><td style="font-weight:700">Google Display — Joyería</td><td style="color:var(--muted)">Google</td><td><div class="bud-val">$890 / $1.200</div><div class="bud-bar"><div class="bud-fill" style="width:74.2%"></div></div></td><td>98,000</td><td>2.2%</td><td><span class="badge bg-orange">Pausada</span></td></tr>
-            </tbody>
-          </table>
+        <div class="kpi-grid" id="gestor-kpis" style="margin-bottom:22px"></div>
+        <div class="tabs" id="gestor-tabs">
+          <div class="tab on" onclick="gestorTab('calendario',this)">📅 Calendario</div>
+          <div class="tab" onclick="gestorTab('campanas',this)">📣 Campañas</div>
+          <div class="tab" onclick="gestorTab('reporte',this)">📊 Reporte</div>
+        </div>
+        <!-- CALENDARIO -->
+        <div id="panel-gestor-cal">
+          <div class="dcard">
+            <table class="dt">
+              <thead><tr>
+                <th>ID</th><th>Fecha · Hora</th><th>Canal</th><th>Marca</th><th>Formato</th>
+                <th>Funnel</th><th>Campaña</th><th>Arte</th><th>Presupuesto</th>
+                <th>Estado</th><th id="gestor-th-acc" style="display:none"></th>
+              </tr></thead>
+              <tbody id="gestor-cal-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <!-- CAMPAÑAS -->
+        <div id="panel-gestor-camp" style="display:none">
+          <div id="gestor-camp-grid"></div>
+        </div>
+        <!-- REPORTE -->
+        <div id="panel-gestor-rep" style="display:none">
+          <div id="btn-new-rep-wrap" style="display:none;margin-bottom:14px">
+            <button class="btn-add" onclick="openM('m-reporte')">+ Agregar Reporte Semanal</button>
+          </div>
+          <div class="dcard">
+            <table class="dt">
+              <thead><tr>
+                <th>Semana</th><th>Campaña</th><th>ID Cont.</th><th>Plataforma</th>
+                <th>Objetivo</th><th>KPI</th><th>Gasto</th><th>Diagnóstico</th>
+                <th>Decisión</th><th id="gestor-rep-th-acc" style="display:none"></th>
+              </tr></thead>
+              <tbody id="gestor-rep-tbody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -951,6 +977,189 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
     <div class="mbtns">
       <button class="mbcancel" onclick="closeM('m-pauta')">Cancelar</button>
       <button class="mbsubmit" onclick="savePauta()">Guardar Pauta</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: NUEVO CONTENIDO -->
+<div class="overlay" id="m-contenido">
+  <div class="modal" style="width:720px;max-width:96vw;max-height:90vh;overflow-y:auto">
+    <div class="mhead"><span class="mtitle">📅 Nuevo Contenido</span><button class="mclose" onclick="closeM('m-contenido')">✕</button></div>
+    <div class="fg-2">
+      <div class="fg"><label>Marca</label>
+        <select id="gc-marca">
+          <option>Orocash</option>
+          <option>Precious by Orocash</option>
+        </select>
+      </div>
+      <div class="fg"><label>Canal</label>
+        <select id="gc-canal">
+          <option>Instagram</option><option>Facebook</option><option>TikTok</option>
+          <option>Facebook + Instagram</option><option>YouTube</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg-2">
+      <div class="fg"><label>Formato</label>
+        <select id="gc-formato">
+          <option>Post 1:1</option><option>Carrusel</option><option>Reel</option>
+          <option>Story</option><option>Video</option>
+        </select>
+      </div>
+      <div class="fg"><label>Pilar</label>
+        <select id="gc-pilar">
+          <option>Educar</option><option>Convertir</option><option>Inspirar</option>
+          <option>Corporativo</option><option>Entretener</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg-2">
+      <div class="fg"><label>Fecha publicación</label><input id="gc-fecha" type="date"></div>
+      <div class="fg"><label>Hora</label><input id="gc-hora" type="time" placeholder="10:00"></div>
+    </div>
+    <div class="fg-2">
+      <div class="fg"><label>Etapa funnel</label>
+        <select id="gc-funnel">
+          <option>Awareness</option><option>Consideración</option><option>Conversión</option>
+        </select>
+      </div>
+      <div class="fg"><label>Objetivo contenido</label><input id="gc-objetivo" type="text" placeholder="Ej: Educación, Compra de oro..."></div>
+    </div>
+    <div class="fg-2">
+      <div class="fg"><label>Campaña macro</label><input id="gc-camp-macro" type="text" placeholder="Ej: Días de Oro"></div>
+      <div class="fg"><label>ID Campaña de pauta (Meta)</label><input id="gc-camp-pauta" type="text" placeholder="Ej: META-COMPRA-JUL26"></div>
+    </div>
+    <div class="fg"><label>Hook / Título</label><input id="gc-hook" type="text" placeholder="La primera línea que engancha al usuario..."></div>
+    <div class="fg"><label>Copy principal</label><textarea id="gc-copy" rows="3" placeholder="Texto del post o ad..."></textarea></div>
+    <div class="fg-2">
+      <div class="fg"><label>CTA</label><input id="gc-cta" type="text" placeholder="Ej: Cotizar ahora, Descubre más..."></div>
+      <div class="fg"><label>Presupuesto asignado ($)</label><input id="gc-presupuesto" type="number" placeholder="0"></div>
+    </div>
+    <div class="fg"><label>🖼 Link del arte / diseño</label><input id="gc-arte-link" type="url" placeholder="https://drive.google.com/... o cualquier URL del archivo"></div>
+    <div class="fg-2">
+      <div class="fg"><label>Landing / WhatsApp</label><input id="gc-landing" type="text" placeholder="https://..."></div>
+      <div class="fg"><label>UTM Campaign</label><input id="gc-utm" type="text" placeholder="Ej: dias_de_oro_jul2026"></div>
+    </div>
+    <div class="fg-2">
+      <div class="fg"><label>Estado</label>
+        <select id="gc-estado">
+          <option>Idea</option><option>Brief aprobado</option><option>En diseño</option>
+          <option>En revisión</option><option>Aprobado</option><option>Publicado</option>
+        </select>
+      </div>
+      <div class="fg"><label>Fecha entrega diseño</label><input id="gc-fentrega" type="date"></div>
+    </div>
+    <div class="fg"><label>Fecha aprobación</label><input id="gc-faprobacion" type="date"></div>
+    <div class="mbtns">
+      <button class="mbcancel" onclick="closeM('m-contenido')">Cancelar</button>
+      <button class="mbsubmit" onclick="saveContenido()">Guardar Contenido</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: NUEVA CAMPAÑA -->
+<div class="overlay" id="m-campana">
+  <div class="modal" style="width:620px;max-width:96vw">
+    <div class="mhead"><span class="mtitle">📣 Nueva Campaña de Pauta</span><button class="mclose" onclick="closeM('m-campana')">✕</button></div>
+    <div class="fg-2">
+      <div class="fg"><label>Plataforma</label>
+        <select id="cc-plat">
+          <option>Meta Ads</option><option>Google Ads</option><option>TikTok Ads</option>
+        </select>
+      </div>
+      <div class="fg"><label>Marca</label>
+        <select id="cc-marca">
+          <option>Orocash</option><option>Precious by Orocash</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg"><label>Nombre de campaña</label><input id="cc-nombre" type="text" placeholder="Ej: EC | Compra de oro | Jul 2026"></div>
+    <div class="fg-2">
+      <div class="fg"><label>Campaña macro</label><input id="cc-camp-macro" type="text" placeholder="Ej: Días de Oro"></div>
+      <div class="fg"><label>ID Contenido vinculado</label><input id="cc-id-cont" type="text" placeholder="Ej: ORO-2026-001"></div>
+    </div>
+    <div class="fg-2">
+      <div class="fg"><label>Objetivo Ads</label>
+        <select id="cc-objetivo">
+          <option>Leads</option><option>Ventas</option><option>Mensajes</option>
+          <option>Alcance</option><option>Tráfico</option><option>Reconocimiento</option>
+        </select>
+      </div>
+      <div class="fg"><label>Etapa funnel</label>
+        <select id="cc-funnel">
+          <option>Awareness</option><option>Consideración</option><option>Conversión</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg"><label>Audiencia</label><input id="cc-audiencia" type="text" placeholder="Ej: Adultos 28-60, Ecuador..."></div>
+    <div class="fg-2">
+      <div class="fg"><label>Fecha inicio</label><input id="cc-finicio" type="date"></div>
+      <div class="fg"><label>Fecha fin</label><input id="cc-ffin" type="date"></div>
+    </div>
+    <div class="fg-2">
+      <div class="fg"><label>Presupuesto ($)</label><input id="cc-presupuesto" type="number" placeholder="0"></div>
+      <div class="fg"><label>Tipo presupuesto</label>
+        <select id="cc-tipo-pres">
+          <option>Total campaña</option><option>Diario</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg-2">
+      <div class="fg"><label>Estado</label>
+        <select id="cc-estado">
+          <option>Borrador</option><option>Programada</option><option>Activa</option><option>Pausada</option><option>Finalizada</option>
+        </select>
+      </div>
+      <div class="fg"><label>Landing</label><input id="cc-landing" type="text" placeholder="https://..."></div>
+    </div>
+    <div class="fg"><label>UTM</label><input id="cc-utm" type="text" placeholder="utm_campaign=..."></div>
+    <div class="mbtns">
+      <button class="mbcancel" onclick="closeM('m-campana')">Cancelar</button>
+      <button class="mbsubmit" onclick="saveCampana()">Guardar Campaña</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: REPORTE SEMANAL -->
+<div class="overlay" id="m-reporte">
+  <div class="modal" style="width:600px;max-width:96vw">
+    <div class="mhead"><span class="mtitle">📊 Reporte Semanal</span><button class="mclose" onclick="closeM('m-reporte')">✕</button></div>
+    <div class="fg-2">
+      <div class="fg"><label>Semana</label><input id="gr-semana" type="text" placeholder="Ej: 20-26 jul 2026"></div>
+      <div class="fg"><label>Campaña</label><input id="gr-campana" type="text" placeholder="Nombre de campaña"></div>
+    </div>
+    <div class="fg-2">
+      <div class="fg"><label>ID Contenido</label><input id="gr-id-cont" type="text" placeholder="Ej: ORO-2026-001"></div>
+      <div class="fg"><label>Plataforma</label>
+        <select id="gr-plat">
+          <option>Meta Ads</option><option>Google Ads</option><option>TikTok Ads</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg-2">
+      <div class="fg"><label>Objetivo</label><input id="gr-objetivo" type="text" placeholder="Leads, Ventas, Mensajes..."></div>
+      <div class="fg"><label>KPI</label>
+        <select id="gr-kpi">
+          <option>CPL</option><option>ROAS</option><option>CPC</option><option>CTR</option><option>CPM</option><option>Mensajes</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg-2">
+      <div class="fg"><label>Gasto ($)</label><input id="gr-gasto" type="number" placeholder="0.00"></div>
+      <div class="fg"><label>Resultado</label><input id="gr-resultado" type="text" placeholder="Ej: 42 leads, 3.2x ROAS..."></div>
+    </div>
+    <div class="fg"><label>Diagnóstico</label><textarea id="gr-diag" rows="2" placeholder="Análisis del rendimiento..."></textarea></div>
+    <div class="fg-2">
+      <div class="fg"><label>Decisión</label>
+        <select id="gr-decision">
+          <option>Mantener</option><option>Optimizar</option><option>Reformular creativo</option><option>Pausar</option>
+        </select>
+      </div>
+      <div class="fg"><label>Próxima acción</label><input id="gr-proxima" type="text" placeholder="Ej: Revisar audiencia..."></div>
+    </div>
+    <div class="mbtns">
+      <button class="mbcancel" onclick="closeM('m-reporte')">Cancelar</button>
+      <button class="mbsubmit" onclick="saveReporte()">Guardar Reporte</button>
     </div>
   </div>
 </div>
@@ -1485,6 +1694,14 @@ let notifSeq = 1;
 let CAMION_ACTIVIDADES = []; // {id, desc, fInicio, fFin, notas}
 let camionActSeq = 1;
 
+// Gestor de Contenido — Social / Diseño
+let CONTENIDO_ITEMS = []; // {id, idCont, marca, canal, formato, fecha, hora, pilar, etapaFunnel, objetivo, campanaMacro, campanaPauta, hook, copy, cta, arteLink, landing, utm, presupuesto, estado, fechaEntregaDise, fechaAprobacion, por, porNombre}
+let contenidoSeq = 1;
+let CAMPANA_ITEMS = []; // {id, plataforma, marca, campanaMacro, objetivoAds, etapaFunnel, nombreCampana, idContenido, audiencia, fInicio, fFin, presupuesto, tipoPres, estado, landing, utm}
+let campanaSeq = 1;
+let REPORTE_ITEMS = []; // {id, semana, campana, idContenido, plataforma, objetivo, kpi, gasto, resultado, diagnostico, decision, proximaAccion}
+let reporteSeq = 1;
+
 // ════════════════════════════════════
 // AUTH
 // ════════════════════════════════════
@@ -1664,6 +1881,7 @@ function navTo(view,el){
   if(view==='presupuesto') renderPresupuesto();
   if(view==='camion') renderCamionActividades();
   if(view==='fotografia') renderFotografiaView();
+  if(view==='social') renderGestor();
 }
 
 // ════════════════════════════════════
@@ -3744,9 +3962,231 @@ function renderFotografiaView(){
     </div>`).join('');
 }
 
+// ════════════════════════════════════
+// GESTOR DE CONTENIDO — Social / Diseño
+// ════════════════════════════════════
+function genContenidoId(marca){
+  const prefix=(marca||'').includes('Precious')?'PREC':'ORO';
+  const year=new Date().getFullYear();
+  return `${prefix}-${year}-${String(contenidoSeq).padStart(3,'0')}`;
+}
+function gestorBadge(estado){
+  const map={'Idea':'background:#1e1e35;color:#a78bfa','Brief aprobado':'background:#0f2d1a;color:#22c55e','En diseño':'background:#1e3a5f;color:#38bdf8','En revisión':'background:#2d1f00;color:#fdc300','Aprobado':'background:#0f2d1a;color:#4ade80','Publicado':'background:#052e16;color:#4ade80','Programada':'background:#0f2d1a;color:#22c55e','Activa':'background:#052e16;color:#4ade80','Borrador':'background:#1e1e35;color:#94a3b8','Pausada':'background:#1c0000;color:#ef4444','Finalizada':'background:#0d0d0d;color:#64748b'};
+  const s=map[estado]||'background:#1e1e35;color:#94a3b8';
+  return `<span style="display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;${s}">${estado||'—'}</span>`;
+}
+function funnelBadge(etapa){
+  const map={'Awareness':'background:#1a2d4a;color:#60a5fa','Consideración':'background:#2d2000;color:#fbbf24','Conversión':'background:#0f2d1a;color:#4ade80'};
+  const s=map[etapa]||'background:#1e1e35;color:#94a3b8';
+  return `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;${s}">${etapa||'—'}</span>`;
+}
+function gestorTab(tab,el){
+  document.querySelectorAll('#gestor-tabs .tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('panel-gestor-cal').style.display=tab==='calendario'?'block':'none';
+  document.getElementById('panel-gestor-camp').style.display=tab==='campanas'?'block':'none';
+  document.getElementById('panel-gestor-rep').style.display=tab==='reporte'?'block':'none';
+  if(tab==='calendario') renderGestorCalendario();
+  if(tab==='campanas') renderGestorCampanas();
+  if(tab==='reporte') renderGestorReporte();
+}
+function renderGestor(){
+  if(!CU) return;
+  const canEdit=CAN_ADD_PAUTA.includes(CU.id);
+  document.getElementById('btn-new-cont').style.display=canEdit?'':'none';
+  document.getElementById('btn-new-camp').style.display=canEdit?'':'none';
+  const thAcc=document.getElementById('gestor-th-acc');
+  if(thAcc) thAcc.style.display=canEdit?'':'none';
+  const thRepAcc=document.getElementById('gestor-rep-th-acc');
+  if(thRepAcc) thRepAcc.style.display=canEdit?'':'none';
+  const btnRepWrap=document.getElementById('btn-new-rep-wrap');
+  if(btnRepWrap) btnRepWrap.style.display=canEdit?'':'none';
+  // KPIs
+  const totalBudget=CONTENIDO_ITEMS.reduce((a,c)=>a+(c.presupuesto||0),0);
+  const pendDise=CONTENIDO_ITEMS.filter(c=>c.estado==='En diseño').length;
+  const campActivas=CAMPANA_ITEMS.filter(c=>c.estado==='Programada'||c.estado==='Activa').length;
+  const publicados=CONTENIDO_ITEMS.filter(c=>c.estado==='Publicado').length;
+  const kpiEl=document.getElementById('gestor-kpis');
+  if(kpiEl) kpiEl.innerHTML=[
+    {ico:'📅',val:CONTENIDO_ITEMS.length,lbl:'Contenidos',col:'var(--yellow)'},
+    {ico:'💰',val:'$'+totalBudget.toLocaleString(),lbl:'Presupuesto total',col:'#38bdf8'},
+    {ico:'📣',val:campActivas,lbl:'Campañas activas',col:'#22c55e'},
+    {ico:'⏳',val:pendDise,lbl:'En diseño',col:'#fbbf24'},
+  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.ico} ${k.lbl}</div><div class="kpi-val" style="color:${k.col}">${k.val}</div><div class="kpi-sub" style="opacity:0">—</div></div>`).join('');
+  renderGestorCalendario();
+}
+function renderGestorCalendario(){
+  const canEdit=CAN_ADD_PAUTA.includes(CU?.id);
+  const tbody=document.getElementById('gestor-cal-tbody');
+  if(!tbody) return;
+  if(!CONTENIDO_ITEMS.length){
+    tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:32px;color:var(--muted)">Sin contenidos. Usa "+ Nuevo Contenido" para comenzar.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML=[...CONTENIDO_ITEMS].sort((a,b)=>(a.fecha||'')>(b.fecha||'')?1:-1).map(c=>`
+    <tr>
+      <td><span style="font-size:11px;font-weight:700;color:var(--yellow)">${c.idCont||'—'}</span></td>
+      <td style="font-size:11px">${c.fecha?fmtDate(c.fecha):'—'}${c.hora?' · '+c.hora:''}</td>
+      <td style="font-size:11px">${c.canal||'—'}</td>
+      <td style="font-size:11px">${c.marca||'—'}</td>
+      <td style="font-size:11px">${c.formato||'—'}</td>
+      <td>${funnelBadge(c.etapaFunnel)}</td>
+      <td style="font-size:11px">${c.campanaMacro||'—'}</td>
+      <td>${c.arteLink?`<a href="${c.arteLink}" target="_blank" style="color:var(--yellow);font-size:11px;text-decoration:none;white-space:nowrap">🖼 Ver arte</a>`:'<span style="color:var(--muted);font-size:11px">—</span>'}</td>
+      <td style="font-size:11px">${c.presupuesto?'$'+c.presupuesto:'—'}</td>
+      <td>${gestorBadge(c.estado)}</td>
+      ${canEdit?`<td><button onclick="deleteContenido(${c.id})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:13px" title="Eliminar">🗑</button></td>`:''}
+    </tr>`).join('');
+}
+function renderGestorCampanas(){
+  const canEdit=CAN_ADD_PAUTA.includes(CU?.id);
+  const grid=document.getElementById('gestor-camp-grid');
+  if(!grid) return;
+  if(!CAMPANA_ITEMS.length){
+    grid.innerHTML=`<div style="text-align:center;padding:40px;color:var(--muted);background:var(--bg2);border:1px solid var(--bord);border-radius:14px">Sin campañas registradas. Usa el botón "+ Campaña".</div>`;
+    return;
+  }
+  grid.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">`+
+    CAMPANA_ITEMS.map(c=>`
+      <div style="background:var(--bg2);border:1px solid var(--bord);border-radius:14px;padding:18px;position:relative">
+        ${canEdit?`<button onclick="deleteCampana(${c.id})" style="position:absolute;top:12px;right:12px;background:none;border:none;color:#ef4444;cursor:pointer;font-size:13px">🗑</button>`:''}
+        <div style="margin-bottom:10px;padding-right:24px">
+          <div style="font-size:13px;font-weight:700;line-height:1.3;margin-bottom:3px">${c.nombreCampana||'Sin nombre'}</div>
+          <div style="font-size:11px;color:var(--muted)">${c.marca||''} · ${c.plataforma||''}</div>
+        </div>
+        ${gestorBadge(c.estado)}
+        <div style="font-size:24px;font-weight:800;color:var(--yellow);margin:10px 0 4px">${c.presupuesto?'$'+c.presupuesto.toLocaleString():'—'}</div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:10px">${c.tipoPres||''}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px">
+          <div style="background:var(--bg3);border-radius:8px;padding:8px"><div style="color:var(--muted);margin-bottom:2px;font-size:9px">INICIO</div><div style="font-weight:700">${c.fInicio?fmtDate(c.fInicio):'—'}</div></div>
+          <div style="background:var(--bg3);border-radius:8px;padding:8px"><div style="color:var(--muted);margin-bottom:2px;font-size:9px">FIN</div><div style="font-weight:700">${c.fFin?fmtDate(c.fFin):'—'}</div></div>
+          <div style="background:var(--bg3);border-radius:8px;padding:8px"><div style="color:var(--muted);margin-bottom:2px;font-size:9px">OBJETIVO</div><div style="font-weight:700">${c.objetivoAds||'—'}</div></div>
+          <div style="background:var(--bg3);border-radius:8px;padding:8px"><div style="color:var(--muted);margin-bottom:2px;font-size:9px">FUNNEL</div><div>${funnelBadge(c.etapaFunnel)}</div></div>
+        </div>
+        ${c.idContenido?`<div style="margin-top:10px;font-size:10px;color:var(--muted)">Contenido: <span style="color:var(--yellow);font-weight:700">${c.idContenido}</span></div>`:''}
+      </div>`).join('')+`</div>`;
+}
+function renderGestorReporte(){
+  const canEdit=CAN_ADD_PAUTA.includes(CU?.id);
+  const tbody=document.getElementById('gestor-rep-tbody');
+  if(!tbody) return;
+  const decMap={'Optimizar':'background:#0f2d1a;color:#22c55e','Mantener':'background:#1a2d4a;color:#60a5fa','Reformular creativo':'background:#2d1000;color:#f87171','Pausar':'background:#1c0000;color:#ef4444'};
+  if(!REPORTE_ITEMS.length){
+    tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--muted)">Sin reportes registrados.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML=[...REPORTE_ITEMS].reverse().map(r=>`
+    <tr>
+      <td style="font-size:11px;white-space:nowrap">${r.semana||'—'}</td>
+      <td style="font-weight:700">${r.campana||'—'}</td>
+      <td><span style="font-size:10px;color:var(--yellow);font-weight:700">${r.idContenido||'—'}</span></td>
+      <td style="font-size:11px">${r.plataforma||'—'}</td>
+      <td style="font-size:11px">${r.objetivo||'—'}</td>
+      <td><span style="color:var(--yellow);font-weight:700">${r.kpi||'—'}</span></td>
+      <td style="font-size:11px">${r.gasto!=null&&r.gasto!==''?'$'+r.gasto:'—'}</td>
+      <td style="font-size:11px;color:var(--muted);max-width:160px">${r.diagnostico||'—'}</td>
+      <td>${r.decision?`<span style="display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;${decMap[r.decision]||'background:#1e1e35;color:#94a3b8'}">${r.decision}</span>`:'—'}</td>
+      ${canEdit?`<td><button onclick="deleteReporte(${r.id})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:13px">🗑</button></td>`:''}
+    </tr>`).join('');
+}
+function deleteContenido(id){
+  if(!confirm('¿Eliminar este contenido?')) return;
+  const i=CONTENIDO_ITEMS.findIndex(c=>c.id===id);
+  if(i>=0) CONTENIDO_ITEMS.splice(i,1);
+  renderGestor(); persistGestor();
+}
+function deleteCampana(id){
+  if(!confirm('¿Eliminar esta campaña?')) return;
+  const i=CAMPANA_ITEMS.findIndex(c=>c.id===id);
+  if(i>=0) CAMPANA_ITEMS.splice(i,1);
+  renderGestorCampanas(); persistGestor();
+}
+function deleteReporte(id){
+  if(!confirm('¿Eliminar este reporte?')) return;
+  const i=REPORTE_ITEMS.findIndex(r=>r.id===id);
+  if(i>=0) REPORTE_ITEMS.splice(i,1);
+  renderGestorReporte(); persistGestor();
+}
+function saveContenido(){
+  const marca=document.getElementById('gc-marca').value;
+  const rec={
+    id:contenidoSeq, idCont:genContenidoId(marca),
+    marca, canal:document.getElementById('gc-canal').value,
+    formato:document.getElementById('gc-formato').value,
+    fecha:document.getElementById('gc-fecha').value,
+    hora:document.getElementById('gc-hora').value,
+    pilar:document.getElementById('gc-pilar').value,
+    etapaFunnel:document.getElementById('gc-funnel').value,
+    objetivo:document.getElementById('gc-objetivo').value,
+    campanaMacro:document.getElementById('gc-camp-macro').value,
+    campanaPauta:document.getElementById('gc-camp-pauta').value,
+    hook:document.getElementById('gc-hook').value,
+    copy:document.getElementById('gc-copy').value,
+    cta:document.getElementById('gc-cta').value,
+    arteLink:document.getElementById('gc-arte-link').value.trim(),
+    landing:document.getElementById('gc-landing').value,
+    utm:document.getElementById('gc-utm').value,
+    presupuesto:parseFloat(document.getElementById('gc-presupuesto').value)||0,
+    estado:document.getElementById('gc-estado').value,
+    fechaEntregaDise:document.getElementById('gc-fentrega').value,
+    fechaAprobacion:document.getElementById('gc-faprobacion').value,
+    por:CU.id, porNombre:CU.name,
+  };
+  contenidoSeq++;
+  CONTENIDO_ITEMS.push(rec);
+  closeM('m-contenido');
+  renderGestor(); persistGestor();
+}
+function saveCampana(){
+  const rec={
+    id:campanaSeq++,
+    plataforma:document.getElementById('cc-plat').value,
+    marca:document.getElementById('cc-marca').value,
+    campanaMacro:document.getElementById('cc-camp-macro').value,
+    objetivoAds:document.getElementById('cc-objetivo').value,
+    etapaFunnel:document.getElementById('cc-funnel').value,
+    nombreCampana:document.getElementById('cc-nombre').value,
+    idContenido:document.getElementById('cc-id-cont').value,
+    audiencia:document.getElementById('cc-audiencia').value,
+    fInicio:document.getElementById('cc-finicio').value,
+    fFin:document.getElementById('cc-ffin').value,
+    presupuesto:parseFloat(document.getElementById('cc-presupuesto').value)||0,
+    tipoPres:document.getElementById('cc-tipo-pres').value,
+    estado:document.getElementById('cc-estado').value,
+    landing:document.getElementById('cc-landing').value,
+    utm:document.getElementById('cc-utm').value,
+  };
+  CAMPANA_ITEMS.push(rec);
+  closeM('m-campana');
+  renderGestorCampanas(); persistGestor();
+}
+function saveReporte(){
+  const rec={
+    id:reporteSeq++,
+    semana:document.getElementById('gr-semana').value,
+    campana:document.getElementById('gr-campana').value,
+    idContenido:document.getElementById('gr-id-cont').value,
+    plataforma:document.getElementById('gr-plat').value,
+    objetivo:document.getElementById('gr-objetivo').value,
+    kpi:document.getElementById('gr-kpi').value,
+    gasto:document.getElementById('gr-gasto').value,
+    resultado:document.getElementById('gr-resultado').value,
+    diagnostico:document.getElementById('gr-diag').value,
+    decision:document.getElementById('gr-decision').value,
+    proximaAccion:document.getElementById('gr-proxima').value,
+  };
+  REPORTE_ITEMS.push(rec);
+  closeM('m-reporte');
+  renderGestorReporte(); persistGestor();
+}
+async function persistGestor(){
+  try{await db.collection('content').doc('gestor').set({contenidos:CONTENIDO_ITEMS,campanas:CAMPANA_ITEMS,reportes:REPORTE_ITEMS});}
+  catch(e){console.error('Firestore(gestor):',e);}
+}
+
 async function loadAllData(){
   try{
-    const [tTasks,tVentas,tPauta,tEventos,tProy,tJara,tMar,tUsers,tTrabajo,tPresp,tJoyas,tCheck,tNotif,tCamion]=await Promise.all([
+    const [tTasks,tVentas,tPauta,tEventos,tProy,tJara,tMar,tUsers,tTrabajo,tPresp,tJoyas,tCheck,tNotif,tCamion,tGestor]=await Promise.all([
       db.collection('content').doc('tasks').get(),
       db.collection('content').doc('ventas').get(),
       db.collection('content').doc('pauta').get(),
@@ -3761,6 +4201,7 @@ async function loadAllData(){
       db.collection('content').doc('checklist').get(),
       db.collection('content').doc('notificaciones').get(),
       db.collection('content').doc('camion').get(),
+      db.collection('content').doc('gestor').get(),
     ]);
     if(tTasks.exists){TASKS.length=0;TASKS.push(...(tTasks.data().items||[]));}
     if(tVentas.exists){VENTAS_MONTHLY.length=0;VENTAS_MONTHLY.push(...(tVentas.data().items||[]));}
@@ -3779,6 +4220,12 @@ async function loadAllData(){
     if(tCheck.exists){CHECKLIST_ITEMS.length=0;CHECKLIST_ITEMS.push(...(tCheck.data().items||[]));}
     if(tNotif.exists){NOTIFICACIONES.length=0;NOTIFICACIONES.push(...(tNotif.data().items||[]));}
     if(tCamion.exists){CAMION_ACTIVIDADES.length=0;CAMION_ACTIVIDADES.push(...(tCamion.data().items||[]));}
+    if(tGestor.exists){
+      const gd=tGestor.data();
+      CONTENIDO_ITEMS.length=0;CONTENIDO_ITEMS.push(...(gd.contenidos||[]));
+      CAMPANA_ITEMS.length=0;CAMPANA_ITEMS.push(...(gd.campanas||[]));
+      REPORTE_ITEMS.length=0;REPORTE_ITEMS.push(...(gd.reportes||[]));
+    }
     // Sync sequence counters
     const maxId=(arr)=>arr.reduce((m,x)=>Math.max(m,x.id||0),0);
     taskSeq=Math.max(taskSeq,maxId(TASKS)+1);
@@ -3793,6 +4240,9 @@ async function loadAllData(){
     checkSeq=Math.max(checkSeq,maxId(CHECKLIST_ITEMS)+1);
     notifSeq=Math.max(notifSeq,maxId(NOTIFICACIONES)+1);
     camionActSeq=Math.max(camionActSeq,maxId(CAMION_ACTIVIDADES)+1);
+    contenidoSeq=Math.max(contenidoSeq,maxId(CONTENIDO_ITEMS)+1);
+    campanaSeq=Math.max(campanaSeq,maxId(CAMPANA_ITEMS)+1);
+    reporteSeq=Math.max(reporteSeq,maxId(REPORTE_ITEMS)+1);
   }catch(e){
     console.error('Error cargando Firestore, se usan datos locales:',e);
   }
