@@ -1237,7 +1237,26 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
   </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
+// ════════════════════════════════════
+// FIREBASE INIT
+// ════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyB6C8gNVZYfk5uUeYOv5mt2QDC8pvYQxHo",
+  authDomain: "orocash-dashboard.firebaseapp.com",
+  databaseURL: "https://orocash-dashboard-default-rtdb.firebaseio.com",
+  projectId: "orocash-dashboard",
+  storageBucket: "orocash-dashboard.firebasestorage.app",
+  messagingSenderId: "665780857069",
+  appId: "1:665780857069:web:d1edf1b2746a3af28ec4e4"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
 // ════════════════════════════════════
 // USERS
 // ════════════════════════════════════
@@ -1438,16 +1457,49 @@ let camionActSeq = 1;
 // ════════════════════════════════════
 // AUTH
 // ════════════════════════════════════
-function doLogin(){
+async function doLogin(){
   const uid=document.getElementById('l-user').value.trim().toLowerCase();
   const pw=document.getElementById('l-pass').value;
-  const u=USERS.find(x=>x.id===uid);
   const err=document.getElementById('l-err');
-  if(!u||u.pass!==pw){err.style.display='block';document.getElementById('l-pass').value='';return;}
-  err.style.display='none';CU=u;launchApp();
+  const btn=document.querySelector('.lbtn');
+  let u=USERS.find(x=>x.id===uid);
+  let email=u&&u.email&&u.email!=='—'?u.email:null;
+  if(!email){
+    try{
+      const dirDoc=await db.collection('directory').doc(uid).get();
+      if(dirDoc.exists) email=dirDoc.data().email;
+    }catch(e){ /* directorio no disponible */ }
+  }
+  if(!email){err.textContent='Usuario o contraseña incorrectos.';err.style.display='block';document.getElementById('l-pass').value='';return;}
+  if(btn){btn.disabled=true;btn.textContent='Ingresando…';}
+  try{
+    await auth.signInWithEmailAndPassword(email,pw);
+  }catch(e){
+    err.textContent='Usuario o contraseña incorrectos.';err.style.display='block';document.getElementById('l-pass').value='';
+    if(btn){btn.disabled=false;btn.textContent='Ingresar';}
+    return;
+  }
+  err.style.display='none';
+  if(!u){
+    try{
+      const usersDoc=await db.collection('content').doc('users').get();
+      const remote=(usersDoc.exists?(usersDoc.data().items||[]):[]).find(x=>x.id===uid);
+      if(remote){USERS.push(remote);u=remote;}
+    }catch(e){ /* ignore */ }
+  }
+  if(!u){
+    err.textContent='Tu cuenta no tiene un perfil configurado. Contacta al administrador.';
+    err.style.display='block';await auth.signOut();
+    if(btn){btn.disabled=false;btn.textContent='Ingresar';}
+    return;
+  }
+  CU=u;
+  await launchApp();
+  if(btn){btn.disabled=false;btn.textContent='Ingresar';}
 }
 function logout(){
   CU=null;
+  auth.signOut().catch(()=>{});
   document.getElementById('l-user').value='';
   document.getElementById('l-pass').value='';
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
@@ -1457,7 +1509,8 @@ function logout(){
 // ════════════════════════════════════
 // LAUNCH
 // ════════════════════════════════════
-function launchApp(){
+async function launchApp(){
+  await loadAllData();
   // Sidebar user
   const av=document.getElementById('sb-av');
   av.textContent=CU.ini;av.style.background=CU.col;
@@ -1811,7 +1864,7 @@ function dropTask(e,status){
   document.querySelectorAll('.kcol').forEach(c=>c.classList.remove('drag-over'));
   if(dragId===null)return;
   const t=TASKS.find(x=>x.id===dragId);
-  if(t){ t.status=status; renderKanban(); renderDashboard(); }
+  if(t){ t.status=status; renderKanban(); renderDashboard(); persistTasks(); }
   dragId=null;
 }
 
@@ -1846,7 +1899,7 @@ function openDetail(id){
   document.getElementById('md-save').style.display=canChange?'inline-flex':'none';
   document.getElementById('md-save').onclick=()=>{
     const task=TASKS.find(x=>x.id===activeDetailId);
-    if(task){task.status=detailNewStatus;renderKanban();renderDashboard();}
+    if(task){task.status=detailNewStatus;renderKanban();renderDashboard();persistTasks();}
     closeM('m-detail');
   };
   openM('m-detail');
@@ -1868,7 +1921,7 @@ function createTask(){
     dept:document.getElementById('t-dept').value,assignee:aName,aId:sel.value,
     date:df,prio:document.getElementById('t-prio').value,status:'pendiente'});
   document.getElementById('t-tit').value='';document.getElementById('t-des').value='';document.getElementById('t-date').value='';
-  closeM('m-task');renderKanban();
+  closeM('m-task');renderKanban();persistTasks();
 }
 
 // ════════════════════════════════════
@@ -1888,7 +1941,7 @@ function createProj(){
   const n=document.getElementById('p-nom').value.trim();
   if(!n){alert('Nombre requerido.');return;}
   PROYECTOS.push({name:n,dept:document.getElementById('p-dept').value,resp:document.getElementById('p-resp').value,ini:'—',fin:'—',avance:0,status:'Inicio'});
-  document.getElementById('p-nom').value='';closeM('m-proj');renderProyectos();
+  document.getElementById('p-nom').value='';closeM('m-proj');renderProyectos();persistProyectos();
 }
 
 // ════════════════════════════════════
@@ -1970,6 +2023,7 @@ function deleteEvento(){
   closeM('m-event');
   renderCalendar('eventos-layout',calY,calM,false);
   renderCalendar('camion-layout',calYC,calMC,true);
+  persistEventos();
 }
 
 // ════════════════════════════════════
@@ -2286,7 +2340,7 @@ function saveVentas(){
   }
   ['v-total','v-pedidos','v-ticket','v-conv','v-gramos'].forEach(i=>document.getElementById(i).value='');
   document.getElementById('ventas-form').classList.remove('on');
-  renderVentas();
+  renderVentas();persistVentas();
 }
 
 // ════════════════════════════════════
@@ -2449,7 +2503,7 @@ function savePauta(){
     obs:document.getElementById('p-obs').value,
     por:CU.id,porNombre:CU.name,fecha:new Date().toISOString().slice(0,10)};
   if(idx>=0)PAUTA_RECORDS[idx]=rec;else PAUTA_RECORDS.push(rec);
-  closeM('m-pauta');renderStores();
+  closeM('m-pauta');renderStores();persistPauta();
 }
 
 // ════════════════════════════════════
@@ -2530,7 +2584,7 @@ function createEvento(){
   closeM('m-nuevo-evento');
   renderCalendar('eventos-layout',calY,calM,false);
   if(forCamion) renderCalendar('camion-layout',calYC,calMC,true);
-  // Show notification count badge
+  persistEventos();persistNotificaciones();
   updateNotifBadge();
 }
 
@@ -2583,7 +2637,7 @@ function renderJaraExhibidores(){
 function saveExhibidores(){
   const msg=document.getElementById('jara-save-msg');
   if(msg){msg.textContent='✅ Guardado';setTimeout(()=>msg.textContent='',2500);}
-  renderJaraExhibidores();
+  renderJaraExhibidores();persistJara();
 }
 function exportExhibidores(){
   const rows=TIENDAS.map(t=>{
@@ -2704,8 +2758,7 @@ function cvConfirm(){
   VENTAS_MONTHLY.sort((a,b)=>{const my=a.year-b.year;if(my!==0)return my;return MESES_CAP.indexOf(a.mes)-MESES_CAP.indexOf(b.mes);});
   closeM('m-csv-ventas');
   cvReset();
-  renderVentas();
-  renderDashboard();
+  renderVentas();renderDashboard();persistVentas();
 }
 
 // ════════════════════════════════════
@@ -2809,7 +2862,7 @@ function crearRuta(){
   const rd=new Date(fecha+'T00:00:00');
   rutasViewMonth=rd.getMonth();
   rutasViewYear=rd.getFullYear();
-  renderRutasCalendar();
+  renderRutasCalendar();persistJara();
 }
 
 function verRuta(id){
@@ -3136,7 +3189,7 @@ function csvConfirmImport(){
   document.getElementById('csv-step3').style.display='none';
   document.getElementById('csv-step1-error').style.display='none';
   document.getElementById('csv-file-input').value='';
-  renderStores();
+  renderStores();persistPauta();
   alert(`✅ Importación completada:\n• ${added} nuevas pautas agregadas\n• ${updated} pautas actualizadas`);
 }
 
@@ -3157,7 +3210,7 @@ function guardarTrabajoJjara(){
   TRABAJO_PERIODOS.push({id:trabajoSeq++,userId:'jjara',desc,fInicio:fi,fFin:ff});
   ['tj-desc-j','tj-inicio-j','tj-fin-j'].forEach(id=>document.getElementById(id).value='');
   closeM('m-trabajo-jjara');
-  renderJaraExhibidores();
+  renderJaraExhibidores();persistTrabajo();
 }
 function guardarTrabajo(){
   const desc=document.getElementById('tj-desc').value.trim();
@@ -3171,6 +3224,7 @@ function guardarTrabajo(){
   closeM('m-trabajo-foto');
   if(uid==='jjara') renderJaraExhibidores();
   else renderTrabajoPeriodos(uid,'trabajo-list-'+uid);
+  persistTrabajo();
 }
 function renderTrabajoPeriodos(uid, containerId){
   const el=document.getElementById(containerId);
@@ -3184,7 +3238,7 @@ function renderTrabajoPeriodos(uid, containerId){
         <div style="font-size:12.5px;font-weight:700">${p.desc}</div>
         <div style="font-size:11px;color:var(--muted);margin-top:2px">${fmtDate(p.fInicio)} → ${fmtDate(p.fFin)} &nbsp;·&nbsp; ${diasEntre(p.fInicio,p.fFin)} días</div>
       </div>
-      <button class="btn-sm-out" style="padding:2px 7px;font-size:10px" onclick="TRABAJO_PERIODOS.splice(TRABAJO_PERIODOS.findIndex(x=>x.id===${p.id}),1);renderTrabajoPeriodos('${uid}','${containerId}')">✕</button>
+      <button class="btn-sm-out" style="padding:2px 7px;font-size:10px" onclick="TRABAJO_PERIODOS.splice(TRABAJO_PERIODOS.findIndex(x=>x.id===${p.id}),1);renderTrabajoPeriodos('${uid}','${containerId}');persistTrabajo()">✕</button>
     </div>`).join('');
 }
 
@@ -3200,7 +3254,7 @@ function guardarVisitaPeriodo(){
   MARIELA_VISITAS_PERIODO.push({id:visitaPeriodoSeq++,joyeria:joy,fInicio:fi,fFin:ff,notas});
   ['vp-joyeria','vp-inicio','vp-fin','vp-notas'].forEach(id=>document.getElementById(id).value='');
   closeM('m-visita-periodo');
-  renderVisitasPeriodo();
+  renderVisitasPeriodo();persistMariela();
 }
 function renderVisitasPeriodo(){
   const el=document.getElementById('mariela-periodos-list');
@@ -3213,7 +3267,7 @@ function renderVisitasPeriodo(){
         <div style="font-size:12.5px;font-weight:700">${p.joyeria}</div>
         <div style="font-size:11px;color:var(--muted);margin-top:2px">${fmtDate(p.fInicio)} → ${fmtDate(p.fFin)} &nbsp;·&nbsp; ${diasEntre(p.fInicio,p.fFin)} días${p.notas?' &nbsp;·&nbsp; '+p.notas:''}</div>
       </div>
-      <button class="btn-sm-out" style="padding:2px 7px;font-size:10px" onclick="MARIELA_VISITAS_PERIODO.splice(${i},1);renderVisitasPeriodo()">✕</button>
+      <button class="btn-sm-out" style="padding:2px 7px;font-size:10px" onclick="MARIELA_VISITAS_PERIODO.splice(${i},1);renderVisitasPeriodo();persistMariela()">✕</button>
     </div>`).join('');
 }
 function fmtDate(s){if(!s)return'—';const d=new Date(s+'T00:00:00');return d.toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'});}
@@ -3257,7 +3311,7 @@ function guardarJoya(){
   VENTAS_DESGLOSE.sort((a,b)=>{const y=a.year-b.year;if(y)return y;return['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'].indexOf(a.mes)-['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'].indexOf(b.mes);});
   closeM('m-nueva-joya');
   TIPOS_JOYA.forEach(t=>{const el=document.getElementById('jy-'+t);if(el)el.value='';});
-  renderJoyas();
+  renderJoyas();persistJoyas();
 }
 function editJoya(id){
   const r=VENTAS_DESGLOSE.find(x=>x.id===id);if(!r)return;
@@ -3304,13 +3358,13 @@ function guardarGasto(){
   PRESUPUESTO.sort((a,b)=>a.fecha.localeCompare(b.fecha));
   ['gasto-concepto','gasto-monto','gasto-fecha'].forEach(id=>document.getElementById(id).value='');
   closeM('m-nuevo-gasto');
-  renderPresupuesto();
+  renderPresupuesto();persistPresupuesto();
 }
 function deleteGasto(id){
   if(!confirm('¿Eliminar este gasto?'))return;
   const idx=PRESUPUESTO.findIndex(x=>x.id===id);
   if(idx>=0)PRESUPUESTO.splice(idx,1);
-  renderPresupuesto();
+  renderPresupuesto();persistPresupuesto();
 }
 function exportPresupuesto(){
   const rows=PRESUPUESTO.map(p=>[p.fecha,p.concepto,p.categoria,'$'+p.monto,p.por].map(v=>`"${v}"`).join(','));
@@ -3351,13 +3405,13 @@ function openNotifPanel(){
 function marcarLeida(id){
   const n=NOTIFICACIONES.find(x=>x.id===id);
   if(n){n.leida=true;}
-  updateNotifBadge();
-  openNotifPanel(); // refresh panel
+  updateNotifBadge();persistNotificaciones();
+  openNotifPanel();
 }
 function marcarTodasLeidas(){
   if(!CU) return;
   NOTIFICACIONES.filter(n=>n.userId===CU.id).forEach(n=>n.leida=true);
-  updateNotifBadge();
+  updateNotifBadge();persistNotificaciones();
   openNotifPanel();
 }
 
@@ -3425,18 +3479,17 @@ function addCheckItem(){
   const ev=evId?ALL_EVENTS.find(x=>x.id===evId):null;
   CHECKLIST_ITEMS.push({id:checkSeq++,texto:txt,done:false,eventId:evId||null,fechaEvento:ev?ev.date:null});
   document.getElementById('check-nuevo-txt').value='';
-  renderChecklist();
-  checkChecklistAlerts();
+  renderChecklist();checkChecklistAlerts();persistChecklist();
 }
 function toggleCheck(id){
   const ci=CHECKLIST_ITEMS.find(x=>x.id===id);
   if(ci) ci.done=!ci.done;
-  renderChecklist();
+  renderChecklist();persistChecklist();
 }
 function deleteCheck(id){
   const idx=CHECKLIST_ITEMS.findIndex(x=>x.id===id);
   if(idx>=0) CHECKLIST_ITEMS.splice(idx,1);
-  renderChecklist();
+  renderChecklist();persistChecklist();
 }
 function renderChecklist(){
   const el=document.getElementById('checklist-items');
@@ -3537,6 +3590,81 @@ function deleteCamionAct(id){
   const idx=CAMION_ACTIVIDADES.findIndex(x=>x.id===id);
   if(idx>=0) CAMION_ACTIVIDADES.splice(idx,1);
   renderCamionActividades();
+  persistCamion();
+}
+
+// ════════════════════════════════════
+// FIRESTORE — PERSIST
+// ════════════════════════════════════
+async function persistTasks(){try{await db.collection('content').doc('tasks').set({items:TASKS});}catch(e){console.error('Firestore(tasks):',e);}}
+async function persistVentas(){try{await db.collection('content').doc('ventas').set({items:VENTAS_MONTHLY});}catch(e){console.error('Firestore(ventas):',e);}}
+async function persistPauta(){try{await db.collection('content').doc('pauta').set({items:PAUTA_RECORDS});}catch(e){console.error('Firestore(pauta):',e);}}
+async function persistEventos(){try{await db.collection('content').doc('eventos').set({items:ALL_EVENTS});}catch(e){console.error('Firestore(eventos):',e);}}
+async function persistProyectos(){try{await db.collection('content').doc('proyectos').set({items:PROYECTOS});}catch(e){console.error('Firestore(proyectos):',e);}}
+async function persistJara(){try{await db.collection('content').doc('jara').set({exhibidores:JARA_EXHIBIDORES,rutas:JARA_RUTAS});}catch(e){console.error('Firestore(jara):',e);}}
+async function persistMariela(){try{await db.collection('content').doc('mariela').set({visitasPeriodo:MARIELA_VISITAS_PERIODO});}catch(e){console.error('Firestore(mariela):',e);}}
+async function persistTrabajo(){try{await db.collection('content').doc('trabajo').set({items:TRABAJO_PERIODOS});}catch(e){console.error('Firestore(trabajo):',e);}}
+async function persistPresupuesto(){try{await db.collection('content').doc('presupuesto').set({items:PRESUPUESTO});}catch(e){console.error('Firestore(presupuesto):',e);}}
+async function persistJoyas(){try{await db.collection('content').doc('joyas').set({items:VENTAS_DESGLOSE});}catch(e){console.error('Firestore(joyas):',e);}}
+async function persistChecklist(){try{await db.collection('content').doc('checklist').set({items:CHECKLIST_ITEMS});}catch(e){console.error('Firestore(checklist):',e);}}
+async function persistNotificaciones(){try{await db.collection('content').doc('notificaciones').set({items:NOTIFICACIONES});}catch(e){console.error('Firestore(notificaciones):',e);}}
+async function persistCamion(){try{await db.collection('content').doc('camion').set({items:CAMION_ACTIVIDADES});}catch(e){console.error('Firestore(camion):',e);}}
+
+// ════════════════════════════════════
+// FIRESTORE — LOAD ALL
+// ════════════════════════════════════
+async function loadAllData(){
+  try{
+    const [tTasks,tVentas,tPauta,tEventos,tProy,tJara,tMar,tUsers,tTrabajo,tPresp,tJoyas,tCheck,tNotif,tCamion]=await Promise.all([
+      db.collection('content').doc('tasks').get(),
+      db.collection('content').doc('ventas').get(),
+      db.collection('content').doc('pauta').get(),
+      db.collection('content').doc('eventos').get(),
+      db.collection('content').doc('proyectos').get(),
+      db.collection('content').doc('jara').get(),
+      db.collection('content').doc('mariela').get(),
+      db.collection('content').doc('users').get(),
+      db.collection('content').doc('trabajo').get(),
+      db.collection('content').doc('presupuesto').get(),
+      db.collection('content').doc('joyas').get(),
+      db.collection('content').doc('checklist').get(),
+      db.collection('content').doc('notificaciones').get(),
+      db.collection('content').doc('camion').get(),
+    ]);
+    if(tTasks.exists){TASKS.length=0;TASKS.push(...(tTasks.data().items||[]));}
+    if(tVentas.exists){VENTAS_MONTHLY.length=0;VENTAS_MONTHLY.push(...(tVentas.data().items||[]));}
+    if(tPauta.exists){PAUTA_RECORDS.length=0;PAUTA_RECORDS.push(...(tPauta.data().items||[]));}
+    if(tEventos.exists){ALL_EVENTS.length=0;ALL_EVENTS.push(...(tEventos.data().items||[]));}
+    if(tProy.exists){PROYECTOS.length=0;PROYECTOS.push(...(tProy.data().items||[]));}
+    if(tJara.exists){const d=tJara.data();JARA_EXHIBIDORES=d.exhibidores||{};JARA_RUTAS.length=0;JARA_RUTAS.push(...(d.rutas||[]));}
+    if(tMar.exists){const d=tMar.data();MARIELA_VISITAS_PERIODO.length=0;MARIELA_VISITAS_PERIODO.push(...(d.visitasPeriodo||[]));}
+    if(tUsers.exists){
+      const remoteUsers=tUsers.data().items||[];
+      remoteUsers.forEach(ru=>{const local=USERS.find(u=>u.id===ru.id);if(local)Object.assign(local,ru);else USERS.push(ru);});
+    }
+    if(tTrabajo.exists){TRABAJO_PERIODOS.length=0;TRABAJO_PERIODOS.push(...(tTrabajo.data().items||[]));}
+    if(tPresp.exists){PRESUPUESTO.length=0;PRESUPUESTO.push(...(tPresp.data().items||[]));}
+    if(tJoyas.exists){VENTAS_DESGLOSE.length=0;VENTAS_DESGLOSE.push(...(tJoyas.data().items||[]));}
+    if(tCheck.exists){CHECKLIST_ITEMS.length=0;CHECKLIST_ITEMS.push(...(tCheck.data().items||[]));}
+    if(tNotif.exists){NOTIFICACIONES.length=0;NOTIFICACIONES.push(...(tNotif.data().items||[]));}
+    if(tCamion.exists){CAMION_ACTIVIDADES.length=0;CAMION_ACTIVIDADES.push(...(tCamion.data().items||[]));}
+    // Sync sequence counters
+    const maxId=(arr)=>arr.reduce((m,x)=>Math.max(m,x.id||0),0);
+    taskSeq=Math.max(taskSeq,maxId(TASKS)+1);
+    ventasSeq=Math.max(ventasSeq,maxId(VENTAS_MONTHLY)+1);
+    pautaSeq=Math.max(pautaSeq,maxId(PAUTA_RECORDS)+1);
+    eventSeq=Math.max(eventSeq,maxId(ALL_EVENTS)+1);
+    rutaSeq=Math.max(rutaSeq,maxId(JARA_RUTAS)+1);
+    trabajoSeq=Math.max(trabajoSeq,maxId(TRABAJO_PERIODOS)+1);
+    visitaPeriodoSeq=Math.max(visitaPeriodoSeq,maxId(MARIELA_VISITAS_PERIODO)+1);
+    presupSeq=Math.max(presupSeq,maxId(PRESUPUESTO)+1);
+    desgloseSeq=Math.max(desgloseSeq,maxId(VENTAS_DESGLOSE)+1);
+    checkSeq=Math.max(checkSeq,maxId(CHECKLIST_ITEMS)+1);
+    notifSeq=Math.max(notifSeq,maxId(NOTIFICACIONES)+1);
+    camionActSeq=Math.max(camionActSeq,maxId(CAMION_ACTIVIDADES)+1);
+  }catch(e){
+    console.error('Error cargando Firestore, se usan datos locales:',e);
+  }
 }
 </script>
 </body>
