@@ -482,28 +482,12 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
           <div class="tabs" style="margin:0">
             <div class="tab on" onclick="switchTableroTab('dashboard',this)" id="tab-dash">📊 Dashboard</div>
             <div class="tab" onclick="switchTableroTab('kanban',this)" id="tab-kanban">📋 Kanban</div>
-            <div class="tab" onclick="switchTableroTab('trabajo',this)" id="tab-trabajo" style="display:none">📅 Mi Trabajo</div>
           </div>
         </div>
 
         <!-- DASHBOARD PANEL -->
         <div id="panel-dashboard">
           <div id="dash-content"></div>
-        </div>
-
-        <!-- TRABAJO PANEL (fotógrafos) -->
-        <div id="panel-trabajo" style="display:none">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <div style="display:flex;align-items:center;gap:10px">
-              <button class="btn-sm-out" onclick="trabajoCal(-1)">‹</button>
-              <span id="trabajo-cal-title" style="font-size:13px;font-weight:700;min-width:140px;text-align:center"></span>
-              <button class="btn-sm-out" onclick="trabajoCal(1)">›</button>
-            </div>
-            <button class="btn-add" onclick="openTrabajo(CU.id)">+ Registrar período</button>
-          </div>
-          <div id="trabajo-calendario" style="margin-bottom:24px"></div>
-          <div style="font-size:12px;font-weight:700;color:var(--yellow);margin-bottom:10px">Períodos registrados</div>
-          <div id="trabajo-periodos-tablero"></div>
         </div>
 
         <!-- KANBAN PANEL -->
@@ -683,21 +667,29 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
       <!-- DESGLOSE JOYAS -->
       <!-- FOTOGRAFÍA — Registro de Trabajos -->
       <div class="view" id="v-fotografia">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
           <span class="view-title" style="margin:0">📷 Mis Trabajos</span>
           <button class="btn-add" onclick="openTrabajo(CU.id)">+ Registrar período</button>
         </div>
-        <!-- Calendar nav -->
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-          <button class="btn-sm-out" onclick="fotoCalNav(-1)">‹</button>
-          <span id="foto-cal-title" style="font-size:14px;font-weight:700;min-width:160px;text-align:center;color:var(--yellow)"></span>
-          <button class="btn-sm-out" onclick="fotoCalNav(1)">›</button>
+        <!-- KPI cards -->
+        <div id="foto-kpis" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px"></div>
+        <!-- Two-column layout: calendar + list -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+          <!-- Calendar -->
+          <div style="background:var(--bg2);border:1px solid var(--bord);border-radius:16px;padding:22px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+              <button class="btn-sm-out" onclick="fotoCalNav(-1)" style="width:36px;height:36px;font-size:18px">‹</button>
+              <span id="foto-cal-title" style="font-size:16px;font-weight:700;color:var(--yellow)"></span>
+              <button class="btn-sm-out" onclick="fotoCalNav(1)" style="width:36px;height:36px;font-size:18px">›</button>
+            </div>
+            <div id="foto-cal-grid"></div>
+          </div>
+          <!-- Periods list -->
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--yellow);margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em">📋 Períodos Registrados</div>
+            <div id="foto-periodos-list"></div>
+          </div>
         </div>
-        <!-- Calendar grid -->
-        <div id="foto-cal-grid" style="margin-bottom:28px;background:var(--bg2);border:1px solid var(--bord);border-radius:14px;padding:18px"></div>
-        <!-- Periods list -->
-        <div style="font-size:13px;font-weight:700;color:var(--yellow);margin-bottom:12px">📋 Períodos Registrados</div>
-        <div id="foto-periodos-list"></div>
       </div>
 
       <div class="view" id="v-joyas">
@@ -1468,7 +1460,6 @@ let storeSearchQ='', storeStatusFilter='all', storeMonthFilter='all';
 // Trabajo por fechas — fotógrafos y Vitrinismo
 let TRABAJO_PERIODOS = []; // {id, userId, desc, fInicio, fFin}
 let trabajoSeq = 1;
-let trabajoCalY=new Date().getFullYear(), trabajoCalM=new Date().getMonth();
 
 // Visitas por fechas — Mariela
 let MARIELA_VISITAS_PERIODO = []; // {id, joyeria, fInicio, fFin, notas}
@@ -1634,10 +1625,6 @@ async function launchApp(){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
   document.getElementById('s-app').classList.add('on');
 
-  // Pestaña "Mi Trabajo" solo para fotógrafos
-  const tabTrabajo=document.getElementById('tab-trabajo');
-  if(tabTrabajo) tabTrabajo.style.display=FOTO_IDS.includes(CU.id)?'':'none';
-
   // Notification badge + alerts on login
   updateNotifBadge();
   checkLoginAlerts();
@@ -1687,8 +1674,6 @@ function switchTableroTab(tab, el){
   el.classList.add('on');
   document.getElementById('panel-dashboard').style.display=tab==='dashboard'?'block':'none';
   document.getElementById('panel-kanban').style.display=tab==='kanban'?'block':'none';
-  document.getElementById('panel-trabajo').style.display=tab==='trabajo'?'block':'none';
-  if(tab==='trabajo') renderTrabajoCalendar();
 }
 
 // ════════════════════════════════════
@@ -3684,44 +3669,52 @@ function fotoCalNav(dir){
 function renderFotografiaView(){
   if(!CU) return;
   const uid=CU.id;
-  // Title
-  const title=document.getElementById('foto-cal-title');
-  if(title) title.textContent=`${MESES_FOTO[fotoCalM]} ${fotoCalY}`;
-  // Build set of worked dates this month
+  // Periods for this user
   const periodos=TRABAJO_PERIODOS.filter(p=>p.userId===uid);
-  const workedDates=new Set();
+  // Build full set of worked dates across all periods
+  const allWorkedDates=new Set();
   periodos.forEach(p=>{
     let d=new Date(p.fInicio+'T00:00:00');
     const fin=new Date(p.fFin+'T00:00:00');
-    while(d<=fin){
-      workedDates.add(d.toISOString().slice(0,10));
-      d.setDate(d.getDate()+1);
-    }
+    while(d<=fin){ allWorkedDates.add(d.toISOString().slice(0,10)); d.setDate(d.getDate()+1); }
   });
-  // Days worked this month count
-  const daysThisMonth=Array.from(workedDates).filter(ds=>ds.startsWith(`${fotoCalY}-${String(fotoCalM+1).padStart(2,'0')}`)).length;
-  // Calendar
+  // Days worked this displayed month
+  const monthPfx=`${fotoCalY}-${String(fotoCalM+1).padStart(2,'0')}`;
+  const daysThisMonth=Array.from(allWorkedDates).filter(ds=>ds.startsWith(monthPfx)).length;
+  const totalDays=allWorkedDates.size;
+  // KPI cards
+  const kpiEl=document.getElementById('foto-kpis');
+  if(kpiEl) kpiEl.innerHTML=[
+    {ico:'📸',val:periodos.length,lbl:'Períodos registrados',col:'var(--yellow)'},
+    {ico:'📅',val:totalDays,lbl:'Total días trabajados',col:'#38bdf8'},
+    {ico:'🗓',val:daysThisMonth,lbl:`Días en ${MESES_FOTO[fotoCalM]}`,col:'#22c55e'},
+  ].map(k=>`<div style="background:var(--bg2);border:1px solid var(--bord);border-radius:14px;padding:20px 22px">
+    <div style="font-size:24px;margin-bottom:6px">${k.ico}</div>
+    <div style="font-size:28px;font-weight:800;color:${k.col};line-height:1">${k.val}</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.05em">${k.lbl}</div>
+  </div>`).join('');
+  // Calendar title
+  const title=document.getElementById('foto-cal-title');
+  if(title) title.textContent=`${MESES_FOTO[fotoCalM]} ${fotoCalY}`;
+  // Calendar grid
   const firstDay=new Date(fotoCalY,fotoCalM,1).getDay();
   const dim=new Date(fotoCalY,fotoCalM+1,0).getDate();
   const dimPrev=new Date(fotoCalY,fotoCalM,0).getDate();
   const today=new Date();
-  let html=`<div style="margin-bottom:12px;font-size:12px;color:var(--muted)">
-    ${daysThisMonth>0?`<span style="color:var(--yellow);font-weight:700">${daysThisMonth} días trabajados</span> este mes`:'Sin días registrados este mes'}
+  let html=`<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px">
+    ${DIAS_FOTO.map(d=>`<div style="text-align:center;font-size:11px;font-weight:700;color:var(--muted);padding:6px 0">${d}</div>`).join('')}
   </div>
-  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:6px">
-    ${DIAS_FOTO.map(d=>`<div style="text-align:center;font-size:10px;font-weight:700;color:var(--muted);padding:5px 0">${d}</div>`).join('')}
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">`;
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px">`;
   for(let i=firstDay-1;i>=0;i--)
-    html+=`<div style="padding:8px 4px;text-align:center;font-size:11px;color:var(--muted);opacity:.3">${dimPrev-i}</div>`;
+    html+=`<div style="aspect-ratio:1;border-radius:10px;background:var(--bg3);opacity:.25;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)">${dimPrev-i}</div>`;
   for(let d=1;d<=dim;d++){
     const ds=`${fotoCalY}-${String(fotoCalM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const worked=workedDates.has(ds);
+    const worked=allWorkedDates.has(ds);
     const isToday=today.getFullYear()===fotoCalY&&today.getMonth()===fotoCalM&&today.getDate()===d;
-    html+=`<div style="padding:8px 4px;border-radius:8px;text-align:center;font-size:12px;font-weight:${isToday?'800':'500'};
+    html+=`<div style="aspect-ratio:1;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:${isToday?'800':'600'};
       background:${worked?'var(--yellow)':isToday?'var(--blue2)':'var(--bg3)'};
       color:${worked?'#0c3260':isToday?'var(--yellow)':'var(--text)'};
-      border:1px solid ${worked?'var(--yellow)':isToday?'var(--yellow)':'var(--bord)'}">${d}</div>`;
+      border:2px solid ${worked?'var(--yellow)':isToday?'var(--yellow)':'transparent'}">${d}</div>`;
   }
   html+=`</div>`;
   const grid=document.getElementById('foto-cal-grid');
@@ -3730,78 +3723,25 @@ function renderFotografiaView(){
   const listEl=document.getElementById('foto-periodos-list');
   if(!listEl) return;
   if(!periodos.length){
-    listEl.innerHTML='<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Sin períodos registrados. Usa el botón de arriba para agregar.</div>';
+    listEl.innerHTML=`<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;background:var(--bg2);border:1px solid var(--bord);border-radius:14px">
+      <div style="font-size:32px;margin-bottom:10px">📷</div>
+      Sin períodos registrados. Usa el botón de arriba para agregar.
+    </div>`;
     return;
   }
   listEl.innerHTML=[...periodos].reverse().map(p=>`
-    <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 16px;background:var(--bg3);border:1px solid var(--bord);border-radius:10px;margin-bottom:8px">
-      <span style="font-size:20px;flex-shrink:0">📸</span>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:700">${p.desc}</div>
-        <div style="font-size:11px;color:var(--yellow);margin-top:3px">
+    <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;background:var(--bg2);border:1px solid var(--bord);border-radius:12px;margin-bottom:10px">
+      <span style="font-size:22px;flex-shrink:0;margin-top:2px">📸</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:700;margin-bottom:4px">${p.desc}</div>
+        <div style="font-size:12px;color:var(--yellow)">
           ${fmtDate(p.fInicio)} → ${fmtDate(p.fFin)}
-          <span style="color:var(--muted)"> · ${diasEntre(p.fInicio,p.fFin)} días</span>
         </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${diasEntre(p.fInicio,p.fFin)} días trabajados</div>
       </div>
       <button onclick="TRABAJO_PERIODOS.splice(TRABAJO_PERIODOS.findIndex(x=>x.id===${p.id}),1);renderFotografiaView();persistTrabajo()"
-        style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:14px;flex-shrink:0">🗑</button>
+        style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:16px;flex-shrink:0;padding:4px">🗑</button>
     </div>`).join('');
-}
-
-// ════════════════════════════════════
-// TRABAJO CALENDAR — Fotógrafos tablero
-// ════════════════════════════════════
-const MESES_TC=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-const DIAS_TC=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-function trabajoCal(dir){
-  trabajoCalM+=dir;
-  if(trabajoCalM>11){trabajoCalM=0;trabajoCalY++;}
-  if(trabajoCalM<0){trabajoCalM=11;trabajoCalY--;}
-  renderTrabajoCalendar();
-}
-function renderTrabajoCalendar(){
-  if(!CU) return;
-  const uid=CU.id;
-  // Title
-  const title=document.getElementById('trabajo-cal-title');
-  if(title) title.textContent=`${MESES_TC[trabajoCalM]} ${trabajoCalY}`;
-  // Build set of worked dates for this month
-  const periodos=TRABAJO_PERIODOS.filter(p=>p.userId===uid);
-  const workedDates=new Set();
-  periodos.forEach(p=>{
-    let d=new Date(p.fInicio+'T00:00:00');
-    const fin=new Date(p.fFin+'T00:00:00');
-    while(d<=fin){
-      workedDates.add(d.toISOString().slice(0,10));
-      d.setDate(d.getDate()+1);
-    }
-  });
-  // Calendar grid
-  const firstDay=new Date(trabajoCalY,trabajoCalM,1).getDay();
-  const dim=new Date(trabajoCalY,trabajoCalM+1,0).getDate();
-  const dimPrev=new Date(trabajoCalY,trabajoCalM,0).getDate();
-  const today=new Date();
-  let html=`<div class="cal-layout" style="box-shadow:none;padding:0">
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px">
-      ${DIAS_TC.map(d=>`<div style="text-align:center;font-size:10px;font-weight:700;color:var(--muted);padding:4px 0">${d}</div>`).join('')}
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">`;
-  for(let i=firstDay-1;i>=0;i--)
-    html+=`<div style="padding:6px;border-radius:6px;background:var(--bg2);opacity:.3;text-align:center;font-size:11px;color:var(--muted)">${dimPrev-i}</div>`;
-  for(let d=1;d<=dim;d++){
-    const ds=`${trabajoCalY}-${String(trabajoCalM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const isWorked=workedDates.has(ds);
-    const isToday=today.getFullYear()===trabajoCalY&&today.getMonth()===trabajoCalM&&today.getDate()===d;
-    html+=`<div style="padding:6px;border-radius:6px;text-align:center;font-size:12px;font-weight:${isToday?'800':'500'};
-      background:${isWorked?'var(--yellow)':isToday?'var(--blue2)':'var(--bg3)'};
-      color:${isWorked?'#0c3260':isToday?'var(--yellow)':'var(--text)'};
-      border:1px solid ${isWorked?'var(--yellow)':isToday?'var(--yellow)':'var(--bord)'}">${d}</div>`;
-  }
-  html+=`</div></div>`;
-  const calEl=document.getElementById('trabajo-calendario');
-  if(calEl) calEl.innerHTML=html;
-  // Periods list
-  renderTrabajoPeriodos(uid,'trabajo-periodos-tablero');
 }
 
 async function loadAllData(){
