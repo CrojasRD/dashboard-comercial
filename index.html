@@ -1600,17 +1600,18 @@ async function launchApp(){
 }
 
 function applyNavAccess(){
+  const isAdmin=ADMINS.includes(CU.id);
   document.querySelectorAll('.ni[data-key]').forEach(el=>{
     const key=el.dataset.key;
-    el.classList.toggle('hidden',!CU.nav.includes(key));
+    el.classList.toggle('hidden',!isAdmin&&!CU.nav.includes(key));
   });
   // Hide section labels if no items visible under them
   const gKeys=['proyectos','eventos','camion'];
   const mKeys=['ventas','joyas','social','pauteo'];
-  const hasG=gKeys.some(k=>CU.nav.includes(k));
-  const hasM=mKeys.some(k=>CU.nav.includes(k));
-  const hasV=CU.nav.includes('vitrinimos');
-  const hasP=CU.nav.includes('presupuesto');
+  const hasG=isAdmin||gKeys.some(k=>CU.nav.includes(k));
+  const hasM=isAdmin||mKeys.some(k=>CU.nav.includes(k));
+  const hasV=isAdmin||CU.nav.includes('vitrinimos');
+  const hasP=isAdmin||CU.nav.includes('presupuesto');
   document.getElementById('lbl-gestion').style.display=hasG?'block':'none';
   document.getElementById('lbl-metricas').style.display=hasM?'block':'none';
   document.getElementById('lbl-vitrinimos').style.display=hasV?'block':'none';
@@ -2162,6 +2163,9 @@ function selectTeamProfile(uid){
   if(uid){
     document.getElementById('perfiles-content').scrollTo({top:0,behavior:'smooth'});
     window.scrollTo({top:0,behavior:'smooth'});
+    // Render sub-sections for selected profile
+    if(FOTO_IDS.includes(uid)) renderTrabajoPeriodos(uid,'trabajo-list-'+uid);
+    if(uid==='mgarcia'){renderMariela();renderVisitasPeriodo();}
   }
 }
 
