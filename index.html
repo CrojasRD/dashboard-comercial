@@ -478,12 +478,28 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
           <div class="tabs" style="margin:0">
             <div class="tab on" onclick="switchTableroTab('dashboard',this)" id="tab-dash">📊 Dashboard</div>
             <div class="tab" onclick="switchTableroTab('kanban',this)" id="tab-kanban">📋 Kanban</div>
+            <div class="tab" onclick="switchTableroTab('trabajo',this)" id="tab-trabajo" style="display:none">📅 Mi Trabajo</div>
           </div>
         </div>
 
         <!-- DASHBOARD PANEL -->
         <div id="panel-dashboard">
           <div id="dash-content"></div>
+        </div>
+
+        <!-- TRABAJO PANEL (fotógrafos) -->
+        <div id="panel-trabajo" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <button class="btn-sm-out" onclick="trabajoCal(-1)">‹</button>
+              <span id="trabajo-cal-title" style="font-size:13px;font-weight:700;min-width:140px;text-align:center"></span>
+              <button class="btn-sm-out" onclick="trabajoCal(1)">›</button>
+            </div>
+            <button class="btn-add" onclick="openTrabajo(CU.id)">+ Registrar período</button>
+          </div>
+          <div id="trabajo-calendario" style="margin-bottom:24px"></div>
+          <div style="font-size:12px;font-weight:700;color:var(--yellow);margin-bottom:10px">Períodos registrados</div>
+          <div id="trabajo-periodos-tablero"></div>
         </div>
 
         <!-- KANBAN PANEL -->
@@ -1429,6 +1445,7 @@ let storeSearchQ='', storeStatusFilter='all', storeMonthFilter='all';
 // Trabajo por fechas — fotógrafos y Vitrinismo
 let TRABAJO_PERIODOS = []; // {id, userId, desc, fInicio, fFin}
 let trabajoSeq = 1;
+let trabajoCalY=new Date().getFullYear(), trabajoCalM=new Date().getMonth();
 
 // Visitas por fechas — Mariela
 let MARIELA_VISITAS_PERIODO = []; // {id, joyeria, fInicio, fFin, notas}
@@ -1594,6 +1611,10 @@ async function launchApp(){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
   document.getElementById('s-app').classList.add('on');
 
+  // Pestaña "Mi Trabajo" solo para fotógrafos
+  const tabTrabajo=document.getElementById('tab-trabajo');
+  if(tabTrabajo) tabTrabajo.style.display=FOTO_IDS.includes(CU.id)?'':'none';
+
   // Notification badge + alerts on login
   updateNotifBadge();
   checkLoginAlerts();
@@ -1640,6 +1661,8 @@ function switchTableroTab(tab, el){
   el.classList.add('on');
   document.getElementById('panel-dashboard').style.display=tab==='dashboard'?'block':'none';
   document.getElementById('panel-kanban').style.display=tab==='kanban'?'block':'none';
+  document.getElementById('panel-trabajo').style.display=tab==='trabajo'?'block':'none';
+  if(tab==='trabajo') renderTrabajoCalendar();
 }
 
 // ════════════════════════════════════
@@ -3617,6 +3640,62 @@ async function persistCamion(){try{await db.collection('content').doc('camion').
 // ════════════════════════════════════
 // FIRESTORE — LOAD ALL
 // ════════════════════════════════════
+// ════════════════════════════════════
+// TRABAJO CALENDAR — Fotógrafos tablero
+// ════════════════════════════════════
+const MESES_TC=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DIAS_TC=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+function trabajoCal(dir){
+  trabajoCalM+=dir;
+  if(trabajoCalM>11){trabajoCalM=0;trabajoCalY++;}
+  if(trabajoCalM<0){trabajoCalM=11;trabajoCalY--;}
+  renderTrabajoCalendar();
+}
+function renderTrabajoCalendar(){
+  if(!CU) return;
+  const uid=CU.id;
+  // Title
+  const title=document.getElementById('trabajo-cal-title');
+  if(title) title.textContent=`${MESES_TC[trabajoCalM]} ${trabajoCalY}`;
+  // Build set of worked dates for this month
+  const periodos=TRABAJO_PERIODOS.filter(p=>p.userId===uid);
+  const workedDates=new Set();
+  periodos.forEach(p=>{
+    let d=new Date(p.fInicio+'T00:00:00');
+    const fin=new Date(p.fFin+'T00:00:00');
+    while(d<=fin){
+      workedDates.add(d.toISOString().slice(0,10));
+      d.setDate(d.getDate()+1);
+    }
+  });
+  // Calendar grid
+  const firstDay=new Date(trabajoCalY,trabajoCalM,1).getDay();
+  const dim=new Date(trabajoCalY,trabajoCalM+1,0).getDate();
+  const dimPrev=new Date(trabajoCalY,trabajoCalM,0).getDate();
+  const today=new Date();
+  let html=`<div class="cal-layout" style="box-shadow:none;padding:0">
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px">
+      ${DIAS_TC.map(d=>`<div style="text-align:center;font-size:10px;font-weight:700;color:var(--muted);padding:4px 0">${d}</div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">`;
+  for(let i=firstDay-1;i>=0;i--)
+    html+=`<div style="padding:6px;border-radius:6px;background:var(--bg2);opacity:.3;text-align:center;font-size:11px;color:var(--muted)">${dimPrev-i}</div>`;
+  for(let d=1;d<=dim;d++){
+    const ds=`${trabajoCalY}-${String(trabajoCalM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isWorked=workedDates.has(ds);
+    const isToday=today.getFullYear()===trabajoCalY&&today.getMonth()===trabajoCalM&&today.getDate()===d;
+    html+=`<div style="padding:6px;border-radius:6px;text-align:center;font-size:12px;font-weight:${isToday?'800':'500'};
+      background:${isWorked?'var(--yellow)':isToday?'var(--blue2)':'var(--bg3)'};
+      color:${isWorked?'#0c3260':isToday?'var(--yellow)':'var(--text)'};
+      border:1px solid ${isWorked?'var(--yellow)':isToday?'var(--yellow)':'var(--bord)'}">${d}</div>`;
+  }
+  html+=`</div></div>`;
+  const calEl=document.getElementById('trabajo-calendario');
+  if(calEl) calEl.innerHTML=html;
+  // Periods list
+  renderTrabajoPeriodos(uid,'trabajo-periodos-tablero');
+}
+
 async function loadAllData(){
   try{
     const [tTasks,tVentas,tPauta,tEventos,tProy,tJara,tMar,tUsers,tTrabajo,tPresp,tJoyas,tCheck,tNotif,tCamion]=await Promise.all([
