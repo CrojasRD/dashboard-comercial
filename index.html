@@ -904,6 +904,10 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
       <div class="fg"><label>Asignar a</label><select id="t-asgn"></select></div>
       <div class="fg"><label>Fecha entrega</label><input id="t-date" type="date"></div>
     </div>
+    <div class="fg-2">
+      <div class="fg"><label>Hora inicio</label><input id="t-hora-ini" type="time"></div>
+      <div class="fg"><label>Hora fin</label><input id="t-hora-fin" type="time"></div>
+    </div>
     <div class="mbtns">
       <button class="mbcancel" onclick="closeM('m-task')">Cancelar</button>
       <button class="mbsubmit" onclick="createTask()">Crear Tarea</button>
@@ -1509,7 +1513,7 @@ const USERS = [
   {id:'gpalma',    name:'Gustavo Palma',    role:'Diseñador',              ini:'GP',col:'#059669', badge:false,pass:'gustavo2026',  email:'gpalma@orocash.ec',   nav:['tablero','eventos','perfiles']},
   {id:'gbarzola',  name:'Gissella Barzola', role:'Diseñadora',             ini:'GB',col:'#0891b2', badge:false,pass:'gissella2026', email:'gbarzola@orocash.ec', nav:['tablero','eventos','perfiles']},
   {id:'pmosquera', name:'Pamela Mosquera',  role:'Social Media',           ini:'PM',col:'#dc2626', badge:false,pass:'pamela2026',   email:'pmosquera@orocash.ec',nav:['tablero','eventos','social','pauteo','perfiles']},
-  {id:'mgarcia',   name:'Mariela García',   role:'Jefa de Ventas',         ini:'MG',col:'#16a34a', badge:false,pass:'mariela2026',  email:'mgarcia@orocash.ec',  nav:['tablero','eventos','ventas','perfiles']},
+  {id:'mgarcia',   name:'Mariela García',   role:'Jefa de Ventas',         ini:'MG',col:'#16a34a', badge:false,pass:'mariela2026',  email:'mgarcia@orocash.ec',  nav:['tablero','eventos','ventas','vitrinimos','perfiles']},
   {id:'kescobar',  name:'Katherine Escobar',role:'Ventas Online',          ini:'KE',col:'#0284c7', badge:false,pass:'katherine2026',email:'gventas1@orocash.ec', nav:['tablero','eventos','ventas','joyas','perfiles']},
   {id:'emendoza',  name:'Eddy Mendoza',     role:'Publicidad Móvil',       ini:'EM',col:'#475569', badge:false,pass:'eddy2026',     email:'emendoza@orocash.ec', nav:['tablero','eventos','camion','perfiles']},
   {id:'mmontoya',  name:'Miguel Montoya',   role:'Fotografía',             ini:'MM',col:'#b45309', badge:false,pass:'miguel2026',   email:'—',                   nav:['tablero','eventos','fotografia','perfiles']},
@@ -2101,7 +2105,7 @@ function renderKanban(){
           <div class="tdept" style="color:${dc}">${t.dept.toUpperCase()}</div>
           <div class="ttitle">${t.title}</div>
           <div class="tdesc">${t.desc}</div>
-          <div class="tfooter"><span class="tdate">📅 ${t.date}</span><span class="tperson">${sh}</span><span class="tprio" style="background:${PCOL[t.prio]}"></span></div>
+          <div class="tfooter"><span class="tdate">📅 ${t.date}${t.horaInicio?` · ${t.horaInicio}${t.horaFin?' – '+t.horaFin:''}`:''}</span><span class="tperson">${sh}</span><span class="tprio" style="background:${PCOL[t.prio]}"></span></div>
         </div>`;}).join('')}</div></div>`;
   }).join('');
 }
@@ -2141,7 +2145,8 @@ function openDetail(id){
   document.getElementById('md-dept').style.color=dc;
   document.getElementById('md-title').textContent=t.title;
   document.getElementById('md-desc').textContent=t.desc;
-  document.getElementById('md-chips').innerHTML=`<span class="dchip">📅 ${t.date}</span><span class="dchip">👤 ${t.assignee}</span><span class="dchip">${PLBL[t.prio]}</span>`;
+  const horaStr=t.horaInicio?` · ⏰ ${t.horaInicio}${t.horaFin?' – '+t.horaFin:''}`:'';
+  document.getElementById('md-chips').innerHTML=`<span class="dchip">📅 ${t.date}${horaStr}</span><span class="dchip">👤 ${t.assignee}</span><span class="dchip">${PLBL[t.prio]}</span>`;
   const canChange=ADMINS.includes(CU?.id)||(t.status!=='vencida');
   const sm={pendiente:'🔲 Pendiente',en_progreso:'🔄 En Progreso',completado:'✅ Completado'};
   if(ADMINS.includes(CU?.id)) sm.vencida='⚠️ Vencida';
@@ -2170,10 +2175,13 @@ function createTask(){
   const dr=document.getElementById('t-date').value;
   let df='—';
   if(dr){const d=new Date(dr+'T12:00:00');df=d.toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'});}
+  const horaIni=document.getElementById('t-hora-ini').value;
+  const horaFin=document.getElementById('t-hora-fin').value;
   TASKS.push({id:taskSeq++,title,desc:document.getElementById('t-des').value.trim()||'—',
     dept:document.getElementById('t-dept').value,assignee:aName,aId:sel.value,
-    date:df,prio:document.getElementById('t-prio').value,status:'pendiente'});
-  document.getElementById('t-tit').value='';document.getElementById('t-des').value='';document.getElementById('t-date').value='';
+    date:df,dateRaw:dr,horaInicio:horaIni,horaFin:horaFin,prio:document.getElementById('t-prio').value,status:'pendiente'});
+  document.getElementById('t-tit').value='';document.getElementById('t-des').value='';
+  document.getElementById('t-date').value='';document.getElementById('t-hora-ini').value='';document.getElementById('t-hora-fin').value='';
   closeM('m-task');renderKanban();persistTasks();
 }
 
