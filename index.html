@@ -203,17 +203,17 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
 .rpanel{display:flex;flex-direction:column;gap:10px;}
 .rpanel-title{font-size:13.5px;font-weight:700;display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
 .rpanel-count{font-size:11px;color:var(--muted);}
-.ecard{background:var(--card);border:1px solid var(--bord);border-radius:9px;
-  padding:13px;display:flex;gap:11px;cursor:pointer;transition:.12s;}
-.ecard:hover{border-color:rgba(253,195,0,.3);}
-.edbadge{text-align:center;flex-shrink:0;width:38px;}
-.eday{font-size:19px;font-weight:800;color:var(--yellow);line-height:1;}
-.emon{font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+.ecard{background:var(--card);border:1px solid var(--bord);border-radius:12px;
+  padding:14px 16px;cursor:pointer;transition:.12s;}
+.ecard:hover{border-color:rgba(253,195,0,.35);background:var(--bg3);}
+.edbadge{text-align:center;flex-shrink:0;width:44px;background:var(--bg3);border-radius:10px;padding:6px 4px;margin-right:12px;}
+.eday{font-size:22px;font-weight:800;color:var(--yellow);line-height:1;}
+.emon{font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
 .einfo{flex:1;min-width:0;}
-.etitle{font-size:12.5px;font-weight:700;margin-bottom:2px;}
-.eloc{font-size:10.5px;color:var(--muted);margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.etitle{font-size:13px;font-weight:700;margin-bottom:4px;}
+.eloc{font-size:11px;color:var(--muted);margin-bottom:6px;}
 .emeta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-.etype-badge{font-size:9px;font-weight:800;letter-spacing:.7px;padding:2px 7px;border-radius:10px;}
+.etype-badge{font-size:9px;font-weight:800;letter-spacing:.7px;padding:2px 8px;border-radius:10px;}
 
 /* PERFIL (individual) */
 .perfil-card{background:var(--card);border:1px solid var(--bord);border-radius:14px;
@@ -1171,14 +1171,37 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
 
 <!-- MODAL: EVENTO DETALLE -->
 <div class="overlay" id="m-event">
-  <div class="modal">
-    <div class="mhead"><span class="mtitle" id="me-type"></span><button class="mclose" onclick="closeM('m-event')">✕</button></div>
-    <h3 id="me-title" style="font-size:16px;margin-bottom:10px;"></h3>
-    <span class="dchip">📍 <span id="me-loc"></span></span>
-    <span class="dchip">📅 <span id="me-date"></span></span>
-    <span class="dchip">👤 <span id="me-person"></span></span>
-    <div id="me-participantes" style="margin-top:12px;display:none">
-      <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Participantes</div>
+  <div class="modal" style="width:560px;max-width:96vw">
+    <div class="mhead">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span id="me-emoji" style="font-size:20px"></span>
+        <span class="mtitle" id="me-type" style="font-size:11px;font-weight:800;letter-spacing:.5px"></span>
+        <span id="me-camion-badge" style="display:none;font-size:9px;background:#0f2d1a;color:#4ade80;padding:2px 8px;border-radius:10px;font-weight:700">🚚 Camión</span>
+      </div>
+      <button class="mclose" onclick="closeM('m-event')">✕</button>
+    </div>
+    <h3 id="me-title" style="font-size:19px;font-weight:800;margin:12px 0 16px;line-height:1.3"></h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div style="background:var(--bg3);border-radius:10px;padding:12px">
+        <div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Fecha</div>
+        <div style="font-size:13px;font-weight:700" id="me-date"></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px" id="me-diff"></div>
+      </div>
+      <div style="background:var(--bg3);border-radius:10px;padding:12px">
+        <div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Responsable</div>
+        <div style="font-size:13px;font-weight:700" id="me-person"></div>
+      </div>
+      <div style="background:var(--bg3);border-radius:10px;padding:12px">
+        <div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Ubicación</div>
+        <div style="font-size:12px;font-weight:600" id="me-loc"></div>
+      </div>
+      <div style="background:var(--bg3);border-radius:10px;padding:12px">
+        <div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Presupuesto</div>
+        <div style="font-size:16px;font-weight:800;color:var(--yellow)" id="me-budget"></div>
+      </div>
+    </div>
+    <div id="me-participantes" style="margin-bottom:16px;display:none">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Participantes del equipo</div>
       <div id="me-part-list" style="display:flex;flex-wrap:wrap;gap:6px"></div>
     </div>
     <div class="mbtns">
@@ -2224,7 +2247,7 @@ function renderCalendar(cid,year,month,camionOnly){
     const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isT=td.getFullYear()===year&&td.getMonth()===month&&td.getDate()===d;
     const de=evtMap[ds]||[];
-    const pills=de.map(e=>`<div class="cal-pill ${e.cls}" onclick="event.stopPropagation();openEventDetail(${e.id})" title="${e.title}">${e.title}</div>`).join('');
+    const pills=de.map(e=>`<div class="cal-pill ${e.cls}" onclick="event.stopPropagation();openEventDetail(${e.id})" title="${e.title} · ${e.loc} · ${e.person}">${TIPO_EMOJI[e.type]||'📅'} ${e.title}</div>`).join('');
     const clickAct=canCreate&&!camionOnly?`onclick="openMEvento(false,'${ds}')"`:camionOnly&&canCreate?`onclick="openMEvento(true,'${ds}')"`:'' ;
     cells+=`<div class="cal-cell" ${clickAct}><div class="cal-n${isT?' today':''}">${d}</div>${pills}</div>`;
   }
@@ -2243,12 +2266,39 @@ function renderCalendar(cid,year,month,camionOnly){
       </div>
       <div class="cal-grid">${DAYS_ES.map(d=>`<div class="cal-dlbl">${d}</div>`).join('')}${cells}</div>
     </div>
-    <div class="rpanel" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px">
-      ${up.map(e=>{const dt=new Date(e.date+'T12:00:00');return`<div class="ecard" onclick="openEventDetail(${e.id})">
-        <div class="edbadge"><div class="eday">${dt.getDate()}</div><div class="emon">${MONTHS_ES[dt.getMonth()].slice(0,3).toUpperCase()}</div></div>
-        <div class="einfo"><div class="etitle">${e.title}</div><div class="eloc">📍 ${e.loc}</div>
-          <div class="emeta"><span style="font-size:10px;color:var(--muted)">👤 ${e.person}</span><span class="etype-badge ${e.typeCls}">${e.type}</span></div>
-        </div></div>`;}).join('')||`<div style="color:var(--muted);font-size:12px;padding:10px">Sin eventos próximos</div>`}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+      ${up.map(e=>{
+        const dt=new Date(e.date+'T12:00:00');
+        const diasSemana=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+        const dow=diasSemana[dt.getDay()];
+        const partCount=(e.participantes||[]).length;
+        const diffDays=Math.ceil((dt-new Date())/(1000*60*60*24));
+        const diffStr=diffDays<0?'Pasado':diffDays===0?'Hoy':diffDays===1?'Mañana':`En ${diffDays} días`;
+        const diffCol=diffDays<0?'#ef4444':diffDays<=3?'#fdc300':'#22c55e';
+        return`<div class="ecard" onclick="openEventDetail(${e.id})">
+          <div style="display:flex;align-items:flex-start;gap:12px">
+            <div class="edbadge">
+              <div style="font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase">${dow}</div>
+              <div class="eday">${dt.getDate()}</div>
+              <div class="emon">${MONTHS_ES[dt.getMonth()].slice(0,3)}</div>
+            </div>
+            <div class="einfo">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+                <span class="etype-badge ${e.typeCls}">${TIPO_EMOJI[e.type]||''} ${e.type}</span>
+                <span style="font-size:10px;font-weight:700;color:${diffCol}">${diffStr}</span>
+                ${e.forCamion?`<span style="font-size:9px;background:#0f2d1a;color:#4ade80;padding:2px 6px;border-radius:10px;font-weight:700">🚚 Camión</span>`:''}
+              </div>
+              <div class="etitle">${e.title}</div>
+              <div class="eloc">📍 ${e.loc}</div>
+              <div class="emeta">
+                <span style="font-size:11px;color:var(--muted)">👤 ${e.person}</span>
+                ${e.budget&&e.budget!=='—'?`<span style="font-size:11px;color:var(--yellow);font-weight:700">💰 ${e.budget}</span>`:''}
+                ${partCount>0?`<span style="font-size:10px;color:var(--muted)">· ${partCount} participante${partCount>1?'s':''}</span>`:''}
+              </div>
+            </div>
+          </div>
+        </div>`;
+      }).join('')||`<div style="color:var(--muted);font-size:12px;padding:16px;background:var(--bg2);border:1px solid var(--bord);border-radius:12px">Sin eventos próximos</div>`}
     </div>`;
 }
 function navCalE(d){calM+=d;if(calM<0){calM=11;calY--;}else if(calM>11){calM=0;calY++;}renderCalendar('eventos-layout',calY,calM,false);}
@@ -2256,11 +2306,25 @@ function navCalC(d){calMC+=d;if(calMC<0){calMC=11;calYC--;}else if(calMC>11){cal
 function openEventDetail(id){
   const e=ALL_EVENTS.find(x=>x.id===id);if(!e)return;
   activeEventId=id;
+  document.getElementById('me-emoji').textContent=TIPO_EMOJI[e.type]||'📅';
   document.getElementById('me-type').textContent=e.type;
   document.getElementById('me-title').textContent=e.title;
   document.getElementById('me-loc').textContent=e.loc;
+  document.getElementById('me-budget').textContent=e.budget||'Por definir';
+  const cBadge=document.getElementById('me-camion-badge');
+  if(cBadge) cBadge.style.display=e.forCamion?'inline':'none';
   const dt=new Date(e.date+'T12:00:00');
-  document.getElementById('me-date').textContent=dt.toLocaleDateString('es-ES',{day:'2-digit',month:'long',year:'numeric'});
+  const diasSemana=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  document.getElementById('me-date').textContent=`${diasSemana[dt.getDay()]}, ${dt.toLocaleDateString('es-ES',{day:'2-digit',month:'long',year:'numeric'})}`;
+  const diffDays=Math.ceil((dt-new Date())/(1000*60*60*24));
+  const diffEl=document.getElementById('me-diff');
+  if(diffEl){
+    if(diffDays<0) diffEl.textContent='Evento pasado';
+    else if(diffDays===0) diffEl.textContent='¡Es hoy!';
+    else if(diffDays===1) diffEl.textContent='¡Mañana!';
+    else diffEl.textContent=`En ${diffDays} días`;
+    diffEl.style.color=diffDays<0?'#ef4444':diffDays<=3?'#fdc300':'#22c55e';
+  }
   document.getElementById('me-person').textContent=e.person;
   // Participants
   const parts=e.participantes||[];
@@ -2807,6 +2871,9 @@ const TIPO_CLS={
 const TIPO_BG={
   'EVENTO':'bg-blue','ACTIVACIÓN':'bg-purple',
   'POP-UP':'bg-teal','MOVILIZACIÓN':'bg-teal'
+};
+const TIPO_EMOJI={
+  'EVENTO':'🎪','ACTIVACIÓN':'⚡','POP-UP':'🏪','MOVILIZACIÓN':'🚚'
 };
 
 function openMEvento(camion=false, prefillDate=null){
