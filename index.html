@@ -175,7 +175,7 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
 .tprio{width:8px;height:8px;border-radius:50%;margin-left:auto;flex-shrink:0;}
 
 /* CALENDAR */
-.cal-layout{display:grid;grid-template-columns:1fr 276px;gap:16px;align-items:start;}
+.cal-layout{display:flex;flex-direction:column;gap:16px;}
 .calcard{background:var(--card);border:1px solid var(--bord);border-radius:10px;overflow:hidden;}
 .cal-head{display:flex;align-items:center;justify-content:space-between;padding:13px 17px;border-bottom:1px solid var(--bord);}
 .cal-month-lbl{font-size:16px;font-weight:700;}
@@ -186,7 +186,8 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);}
 .cal-dlbl{text-align:center;font-size:10.5px;font-weight:700;color:var(--muted);
   padding:9px 3px 7px;border-bottom:1px solid var(--bord);}
-.cal-cell{min-height:78px;padding:5px 6px;border-right:1px solid var(--bord);border-bottom:1px solid var(--bord);}
+.cal-cell{min-height:110px;padding:6px 8px;border-right:1px solid var(--bord);border-bottom:1px solid var(--bord);cursor:pointer;transition:background .12s;}
+.cal-cell:hover{background:rgba(253,195,0,.04);}
 .cal-cell:nth-child(7n){border-right:none;}
 .cal-cell.other .cal-n{color:#253a54;}
 .cal-n{font-size:11.5px;color:var(--muted);font-weight:600;width:21px;height:21px;
@@ -1182,6 +1183,7 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
     </div>
     <div class="mbtns">
       <button class="mbcancel" id="btn-del-evento" onclick="deleteEvento()" style="display:none;background:#ef4444;color:#fff;border-color:#ef4444">🗑 Eliminar</button>
+      <button class="btn-sm-out" id="btn-edit-evento" onclick="editEvento()" style="display:none">✏️ Editar</button>
       <button class="mbsubmit" onclick="closeM('m-event')">Cerrar</button>
     </div>
   </div>
@@ -1666,7 +1668,7 @@ const DAYS_ES=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
 // ════════════════════════════════════
 let CU = null;
 let statFilter='all', prioFilter='all', searchQ='', taskMonthFilter='all';
-let activeDetailId=null, detailNewStatus=null, activeEventId=null;
+let activeDetailId=null, detailNewStatus=null, activeEventId=null, editingEventId=null;
 let calY=2026,calM=6,calYC=2026,calMC=6;
 let storeSearchQ='', storeStatusFilter='all', storeMonthFilter='all';
 
@@ -2214,6 +2216,7 @@ function renderCalendar(cid,year,month,camionOnly){
   const firstDay=new Date(year,month,1).getDay();
   const dim=new Date(year,month+1,0).getDate();
   const dimPrev=new Date(year,month,0).getDate();
+  const canCreate=CAN_MANAGE_EVENTS.includes(CU?.id)||ADMINS.includes(CU?.id);
   let cells='';
   for(let i=firstDay-1;i>=0;i--)cells+=`<div class="cal-cell other"><div class="cal-n">${dimPrev-i}</div></div>`;
   const td=new Date();
@@ -2221,9 +2224,9 @@ function renderCalendar(cid,year,month,camionOnly){
     const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const isT=td.getFullYear()===year&&td.getMonth()===month&&td.getDate()===d;
     const de=evtMap[ds]||[];
-    const pills=de.slice(0,2).map(e=>`<div class="cal-pill ${e.cls}" onclick="openEventDetail(${e.id})" title="${e.title}">${e.title}</div>`).join('');
-    const more=de.length>2?`<div style="font-size:9px;color:var(--muted)">+${de.length-2}</div>`:'';
-    cells+=`<div class="cal-cell"><div class="cal-n${isT?' today':''}">${d}</div>${pills}${more}</div>`;
+    const pills=de.map(e=>`<div class="cal-pill ${e.cls}" onclick="event.stopPropagation();openEventDetail(${e.id})" title="${e.title}">${e.title}</div>`).join('');
+    const clickAct=canCreate&&!camionOnly?`onclick="openMEvento(false,'${ds}')"`:camionOnly&&canCreate?`onclick="openMEvento(true,'${ds}')"`:'' ;
+    cells+=`<div class="cal-cell" ${clickAct}><div class="cal-n${isT?' today':''}">${d}</div>${pills}</div>`;
   }
   const tot=firstDay+dim;const fill=tot%7===0?0:7-(tot%7);
   for(let d=1;d<=fill;d++)cells+=`<div class="cal-cell other"><div class="cal-n">${d}</div></div>`;
@@ -2231,18 +2234,21 @@ function renderCalendar(cid,year,month,camionOnly){
   const navFn=camionOnly?'navCalC':'navCalE';
   document.getElementById(cid).innerHTML=`
     <div class="calcard">
-      <div class="cal-head"><span class="cal-month-lbl">${MONTHS_ES[month]} ${year}</span>
-        <div class="cal-navs"><button class="cal-btn" onclick="${navFn}(-1)">‹</button><button class="cal-btn" onclick="${navFn}(1)">›</button></div>
+      <div class="cal-head">
+        <span class="cal-month-lbl">${MONTHS_ES[month]} ${year}</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          ${canCreate&&!camionOnly?`<button class="btn-add" style="padding:5px 12px;font-size:11px" onclick="openMEvento(false)">+ Nuevo Evento</button>`:''}
+          <div class="cal-navs"><button class="cal-btn" onclick="${navFn}(-1)">‹</button><button class="cal-btn" onclick="${navFn}(1)">›</button></div>
+        </div>
       </div>
       <div class="cal-grid">${DAYS_ES.map(d=>`<div class="cal-dlbl">${d}</div>`).join('')}${cells}</div>
     </div>
-    <div class="rpanel">
-      <div class="rpanel-title">Próximos eventos <span class="rpanel-count">${up.length} total</span></div>
+    <div class="rpanel" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px">
       ${up.map(e=>{const dt=new Date(e.date+'T12:00:00');return`<div class="ecard" onclick="openEventDetail(${e.id})">
         <div class="edbadge"><div class="eday">${dt.getDate()}</div><div class="emon">${MONTHS_ES[dt.getMonth()].slice(0,3).toUpperCase()}</div></div>
         <div class="einfo"><div class="etitle">${e.title}</div><div class="eloc">📍 ${e.loc}</div>
-          <div class="emeta"><span style="font-size:10px;color:var(--muted)">👤 ${e.person}</span><span style="font-size:10px;color:var(--muted)">💰 ${e.budget}</span><span class="etype-badge ${e.typeCls}">${e.type}</span></div>
-        </div></div>`;}).join('')||`<div style="color:var(--muted);font-size:12px">Sin eventos</div>`}
+          <div class="emeta"><span style="font-size:10px;color:var(--muted)">👤 ${e.person}</span><span class="etype-badge ${e.typeCls}">${e.type}</span></div>
+        </div></div>`;}).join('')||`<div style="color:var(--muted);font-size:12px;padding:10px">Sin eventos próximos</div>`}
     </div>`;
 }
 function navCalE(d){calM+=d;if(calM<0){calM=11;calY--;}else if(calM>11){calM=0;calY++;}renderCalendar('eventos-layout',calY,calM,false);}
@@ -2273,6 +2279,7 @@ function openEventDetail(id){
   }
   const canDel=CAN_MANAGE_EVENTS.includes(CU?.id)||ADMINS.includes(CU?.id);
   document.getElementById('btn-del-evento').style.display=canDel?'inline-flex':'none';
+  document.getElementById('btn-edit-evento').style.display=canDel?'inline-flex':'none';
   openM('m-event');
 }
 function deleteEvento(){
@@ -2802,7 +2809,10 @@ const TIPO_BG={
   'POP-UP':'bg-teal','MOVILIZACIÓN':'bg-teal'
 };
 
-function openMEvento(camion=false){
+function openMEvento(camion=false, prefillDate=null){
+  editingEventId=null;
+  document.querySelector('#m-nuevo-evento .mtitle').textContent='📅 Nuevo Evento';
+  document.querySelector('#m-nuevo-evento .mbsubmit').textContent='Crear Evento';
   initEventoModal();
   if(camion){
     document.getElementById('ev-tipo').value='MOVILIZACIÓN';
@@ -2811,6 +2821,31 @@ function openMEvento(camion=false){
     document.getElementById('ev-tipo').value='EVENTO';
     document.querySelector('input[name="ev-camion"][value="no"]').checked=true;
   }
+  if(prefillDate) document.getElementById('ev-fecha').value=prefillDate;
+  openM('m-nuevo-evento');
+}
+function editEvento(){
+  if(!activeEventId) return;
+  const e=ALL_EVENTS.find(x=>x.id===activeEventId);
+  if(!e) return;
+  editingEventId=activeEventId;
+  closeM('m-event');
+  document.querySelector('#m-nuevo-evento .mtitle').textContent='✏️ Editar Evento';
+  document.querySelector('#m-nuevo-evento .mbsubmit').textContent='Guardar Cambios';
+  initEventoModal();
+  document.getElementById('ev-titulo').value=e.title;
+  document.getElementById('ev-fecha').value=e.date;
+  document.getElementById('ev-tipo').value=e.type;
+  document.getElementById('ev-loc').value=e.loc;
+  const personSel=document.getElementById('ev-person');
+  const personU=USERS.find(u=>u.name===e.person);
+  if(personU) personSel.value=personU.id;
+  const parts=e.participantes||[];
+  document.querySelectorAll('#ev-participantes-list input[type=checkbox]').forEach(cb=>{
+    cb.checked=parts.some(p=>p.id===cb.value);
+  });
+  const forCamion=e.forCamion||false;
+  document.querySelector(`input[name="ev-camion"][value="${forCamion?'si':'no'}"]`).checked=true;
   openM('m-nuevo-evento');
 }
 
@@ -2823,25 +2858,31 @@ function createEvento(){
   const personSel=document.getElementById('ev-person');
   const person=personSel.options[personSel.selectedIndex]?.text||CU.name;
   const forCamion=document.querySelector('input[name="ev-camion"]:checked')?.value==='si';
-  // Collect selected participants
   const participantes=[];
   document.querySelectorAll('#ev-participantes-list input[type=checkbox]:checked').forEach(cb=>{
-    const uid=cb.value;
-    const u=USERS.find(x=>x.id===uid);
+    const uid=cb.value;const u=USERS.find(x=>x.id===uid);
     if(u) participantes.push({id:uid,name:u.name});
   });
-  const evId=eventSeq++;
-  ALL_EVENTS.push({
-    id:evId,title:titulo,loc,date:fecha,person,budget:'—',
-    type:tipo,cls:TIPO_CLS[tipo]||'pill-evento',typeCls:TIPO_BG[tipo]||'bg-blue',
-    forCamion, participantes
-  });
-  // Create in-app notifications for each participant
-  participantes.forEach(p=>{
-    NOTIFICACIONES.push({id:notifSeq++,userId:p.id,eventoId:evId,
-      mensaje:`Fuiste asignado al evento "${titulo}" el ${fmtDate(fecha)}.`,leida:false});
-  });
-  // Clear form
+  if(editingEventId){
+    // UPDATE existing event
+    const idx=ALL_EVENTS.findIndex(x=>x.id===editingEventId);
+    if(idx>=0){
+      ALL_EVENTS[idx]={...ALL_EVENTS[idx],title:titulo,loc,date:fecha,person,
+        type:tipo,cls:TIPO_CLS[tipo]||'pill-evento',typeCls:TIPO_BG[tipo]||'bg-blue',
+        forCamion,participantes};
+    }
+    editingEventId=null;
+  } else {
+    // CREATE new event
+    const evId=eventSeq++;
+    ALL_EVENTS.push({id:evId,title:titulo,loc,date:fecha,person,budget:'—',
+      type:tipo,cls:TIPO_CLS[tipo]||'pill-evento',typeCls:TIPO_BG[tipo]||'bg-blue',
+      forCamion,participantes});
+    participantes.forEach(p=>{
+      NOTIFICACIONES.push({id:notifSeq++,userId:p.id,eventoId:evId,
+        mensaje:`Fuiste asignado al evento "${titulo}" el ${fmtDate(fecha)}.`,leida:false});
+    });
+  }
   ['ev-titulo','ev-loc'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('ev-fecha').value='';
   document.querySelectorAll('#ev-participantes-list input[type=checkbox]').forEach(cb=>cb.checked=false);
