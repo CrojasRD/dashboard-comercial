@@ -373,7 +373,6 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
     </div>
     <div class="lerr" id="l-err">Usuario o contraseña incorrectos.</div>
     <button class="lbtn" onclick="doLogin()">Ingresar</button>
-    <div class="lhelp">¿Problemas? <a onclick="showCreds()">Ver credenciales</a></div>
   </div>
 </div>
 
@@ -433,7 +432,6 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
       </div>
     </nav>
     <div class="sb-bottom">
-      <button class="btn-logout" onclick="openChangePass()" style="margin-bottom:4px">🔑 Cambiar contraseña</button>
       <button class="btn-logout" onclick="logout()">← Cerrar sesión</button>
     </div>
   </aside>
@@ -450,6 +448,8 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
         <div class="top-role" id="top-role"></div>
       </div>
       <div class="topbar-fill"></div>
+      <button onclick="openTheme()" title="Personalizar colores" style="background:none;border:1px solid var(--bord);color:var(--text);padding:5px 10px;border-radius:8px;cursor:pointer;font-size:15px">🎨</button>
+      <button onclick="openChangePass()" title="Cambiar contraseña" style="background:none;border:1px solid var(--bord);color:var(--text);padding:5px 10px;border-radius:8px;cursor:pointer;font-size:15px">🔑</button>
       <button id="btn-notif" onclick="openNotifPanel()" style="position:relative;background:none;border:1px solid var(--bord);color:var(--text);padding:5px 10px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;gap:6px">
         🔔<span id="notif-count" style="display:none;position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border-radius:10px;font-size:9px;font-weight:800;padding:1px 5px;min-width:14px;text-align:center"></span>
       </button>
@@ -879,6 +879,61 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
         <button class="mbcancel" onclick="csvBack2()">← Atrás</button>
         <button class="mbsubmit" id="csv-confirm-btn" onclick="csvConfirmImport()">✅ Confirmar Importación</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: PERSONALIZAR TEMA -->
+<div class="overlay" id="m-theme">
+  <div class="modal" style="width:420px;max-width:96vw">
+    <div class="mhead"><span class="mtitle">🎨 Personalizar mi dashboard</span><button class="mclose" onclick="closeM('m-theme')">✕</button></div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Elige el color de acento de tu interfaz. Solo tú verás este cambio.</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px" id="theme-options">
+      <!-- Rendered by JS -->
+    </div>
+    <div class="mbtns">
+      <button class="mbcancel" onclick="closeM('m-theme')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EDITAR USUARIO -->
+<div class="overlay" id="m-edit-user">
+  <div class="modal" style="width:460px;max-width:96vw">
+    <div class="mhead"><span class="mtitle">✏️ Editar Usuario</span><button class="mclose" onclick="closeM('m-edit-user')">✕</button></div>
+    <input type="hidden" id="eu-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="fg">
+        <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:4px">Nombre completo</label>
+        <input type="text" id="eu-name" style="width:100%;background:var(--bg3);border:1px solid var(--bord);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px">
+      </div>
+      <div class="fg">
+        <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:4px">Correo electrónico</label>
+        <input type="email" id="eu-email" placeholder="usuario@orocash.ec" style="width:100%;background:var(--bg3);border:1px solid var(--bord);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px">
+      </div>
+      <div class="fg">
+        <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:4px">Rol / Cargo</label>
+        <input type="text" id="eu-role" style="width:100%;background:var(--bg3);border:1px solid var(--bord);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px">
+      </div>
+      <div class="fg">
+        <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:4px">Iniciales</label>
+        <input type="text" id="eu-ini" maxlength="3" style="width:100%;background:var(--bg3);border:1px solid var(--bord);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px">
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:8px">Acceso a secciones</label>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+        ${[['tablero','📊 Tablero'],['proyectos','📁 Proyectos'],['eventos','🗓 Eventos'],['camion','🚚 Camión'],['perfiles','👥 Perfiles'],['ventas','💰 Ventas'],['social','📱 Social Media'],['pauteo','📋 Contenido'],['presupuesto','💼 Presupuesto'],['fotografia','📷 Fotografía'],['vitrinimos','🪟 Vitrinismo'],['joyas','💎 Joyas']].map(([k,lbl])=>`
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--text);background:var(--bg3);border:1px solid var(--bord);border-radius:6px;padding:5px 8px">
+            <input type="checkbox" id="eu-nav-${k}" value="${k}" ${k==='tablero'?'disabled checked':''}> ${lbl}
+          </label>`).join('')}
+      </div>
+    </div>
+    <div id="eu-err" style="color:#f87171;font-size:12px;margin-bottom:8px;display:none"></div>
+    <div id="eu-ok" style="color:#4ade80;font-size:12px;margin-bottom:8px;display:none"></div>
+    <div class="mbtns">
+      <button class="mbsubmit" onclick="saveEditUser()">Guardar cambios</button>
+      <button class="mbcancel" onclick="closeM('m-edit-user')">Cancelar</button>
     </div>
   </div>
 </div>
@@ -1505,9 +1560,13 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
           <option value="otro">Otro</option>
         </select>
       </div>
-      <div class="fg"><label>Fecha</label><input id="ruta-fecha" type="date"></div>
+      <div class="fg"><label>Fecha *</label><input id="ruta-fecha" type="date"></div>
     </div>
-    <div class="fg"><label>Tiendas / Joyerías a visitar</label><input id="ruta-tiendas" placeholder="Ej: JO-001, JO-014, JO-022..."></div>
+    <div class="fg-2">
+      <div class="fg"><label>Hora de entrada * <span style="font-weight:400;font-size:10px;color:var(--muted)">(llegada a joyería)</span></label><input id="ruta-hora-ini" type="time" required></div>
+      <div class="fg"><label>Hora de salida * <span style="font-weight:400;font-size:10px;color:var(--muted)">(salida de joyería)</span></label><input id="ruta-hora-fin" type="time" required></div>
+    </div>
+    <div class="fg"><label>Joyerías visitadas</label><input id="ruta-tiendas" placeholder="Ej: JO-001, JO-014, JO-022..."></div>
     <div class="fg"><label>Notas adicionales</label><textarea id="ruta-notas" rows="3" placeholder="Observaciones, objetivos de visita..."></textarea></div>
     <div class="mbtns">
       <button class="mbcancel" onclick="closeM('m-nueva-ruta')">Cancelar</button>
@@ -1869,6 +1928,52 @@ function logout(){
 }
 
 // ════════════════════════════════════
+// TEMAS / PERSONALIZACIÓN
+// ════════════════════════════════════
+const THEMES={
+  oro:      {label:'✨ Oro',       accent:'#fdc300',bg:'#090e1b',card:'#101e35'},
+  esmeralda:{label:'💚 Esmeralda', accent:'#22c55e',bg:'#071510',card:'#0d2218'},
+  rubi:     {label:'❤️ Rubí',      accent:'#f43f5e',bg:'#160809',card:'#250d10'},
+  zafiro:   {label:'💙 Zafiro',    accent:'#38bdf8',bg:'#070d17',card:'#0d1830'},
+  violeta:  {label:'💜 Violeta',   accent:'#c084fc',bg:'#0e0718',card:'#1a0e2a'},
+  plata:    {label:'🤍 Plata',     accent:'#94a3b8',bg:'#0a0a0f',card:'#13131e'},
+};
+let currentThemeId='oro';
+
+function applyTheme(id){
+  const t=THEMES[id]||THEMES.oro;
+  const root=document.documentElement;
+  root.style.setProperty('--yellow',t.accent);
+  root.style.setProperty('--yel2',t.accent+'cc');
+  root.style.setProperty('--bg',t.bg);
+  root.style.setProperty('--bg3',t.card);
+  currentThemeId=id;
+}
+
+function openTheme(){
+  const opts=document.getElementById('theme-options');
+  opts.innerHTML=Object.entries(THEMES).map(([id,t])=>`
+    <div onclick="selectTheme('${id}')" style="
+      cursor:pointer;border-radius:10px;padding:14px 10px;text-align:center;
+      background:${t.card};border:2px solid ${id===currentThemeId?t.accent:'rgba(255,255,255,.1)'};
+      transition:.15s;display:flex;flex-direction:column;align-items:center;gap:8px
+    ">
+      <div style="width:32px;height:32px;border-radius:50%;background:${t.accent};box-shadow:0 0 12px ${t.accent}55"></div>
+      <div style="font-size:11px;font-weight:700;color:#fff">${t.label}</div>
+      ${id===currentThemeId?'<div style="font-size:9px;color:'+t.accent+'">● Activo</div>':''}
+    </div>`).join('');
+  openM('m-theme');
+}
+
+async function selectTheme(id){
+  applyTheme(id);
+  // Re-render theme options to show active state
+  openTheme();
+  // Save to Firestore
+  try{await db.collection('directory').doc(CU.id).set({theme:id},{merge:true});}catch(e){}
+}
+
+// ════════════════════════════════════
 // GESTIÓN DE USUARIOS (CREAR)
 // ════════════════════════════════════
 let _secondaryApp=null;
@@ -1877,6 +1982,60 @@ function getSecondaryAuth(){
     _secondaryApp=firebase.apps.find(a=>a.name==='secondary')||firebase.initializeApp(firebaseConfig,'secondary');
   }
   return _secondaryApp.auth();
+}
+
+function openEditUser(uid){
+  const u=USERS.find(x=>x.id===uid);
+  if(!u) return;
+  document.getElementById('eu-id').value=uid;
+  document.getElementById('eu-name').value=u.name||'';
+  document.getElementById('eu-email').value=u.email&&u.email!=='—'?u.email:'';
+  document.getElementById('eu-role').value=u.role||'';
+  document.getElementById('eu-ini').value=u.ini||'';
+  const navKeys=['tablero','proyectos','eventos','camion','perfiles','ventas','social','pauteo','presupuesto','fotografia','vitrinimos','joyas'];
+  navKeys.forEach(k=>{const cb=document.getElementById('eu-nav-'+k);if(cb&&!cb.disabled)cb.checked=(u.nav||[]).includes(k);});
+  document.getElementById('eu-err').style.display='none';
+  document.getElementById('eu-ok').style.display='none';
+  openM('m-edit-user');
+}
+
+async function saveEditUser(){
+  const uid=document.getElementById('eu-id').value;
+  const u=USERS.find(x=>x.id===uid);
+  if(!u) return;
+  const err=document.getElementById('eu-err');
+  const ok=document.getElementById('eu-ok');
+  err.style.display='none';ok.style.display='none';
+
+  const name=document.getElementById('eu-name').value.trim()||u.name;
+  const email=document.getElementById('eu-email').value.trim()||u.email;
+  const role=document.getElementById('eu-role').value.trim()||u.role;
+  const ini=document.getElementById('eu-ini').value.trim().toUpperCase()||u.ini;
+  const navKeys=['tablero','proyectos','eventos','camion','perfiles','ventas','social','pauteo','presupuesto','fotografia','vitrinimos','joyas'];
+  const nav=navKeys.filter(k=>{const cb=document.getElementById('eu-nav-'+k);return cb&&cb.checked;});
+  if(!nav.includes('tablero')) nav.unshift('tablero');
+
+  // Update in-memory
+  Object.assign(u,{name,email,role,ini,nav});
+
+  try{
+    // Update directory email for login lookup
+    if(email&&email!=='—') await db.collection('directory').doc(uid).set({email},{merge:true});
+
+    // Persist to content/users
+    const usersDoc=await db.collection('content').doc('users').get();
+    const currentItems=usersDoc.exists?(usersDoc.data().items||[]):[];
+    const updated=[...currentItems.filter(x=>x.id!==uid),{id:uid,name,email,role,ini,col:u.col,badge:u.badge,nav}];
+    await db.collection('content').doc('users').set({items:updated});
+
+    ok.textContent='✅ Perfil actualizado correctamente.';
+    ok.style.display='block';
+    renderPerfiles();
+    setTimeout(()=>closeM('m-edit-user'),1800);
+  }catch(e){
+    err.textContent='❌ Error: '+e.message;
+    err.style.display='block';
+  }
 }
 
 function openCreateUser(){
@@ -2058,6 +2217,11 @@ async function adminResetPass(uid){
 // ════════════════════════════════════
 async function launchApp(){
   await loadAllData();
+  // Load user theme preference
+  try{
+    const prefDoc=await db.collection('directory').doc(CU.id).get();
+    if(prefDoc.exists&&prefDoc.data().theme) applyTheme(prefDoc.data().theme);
+  }catch(e){}
   // Sidebar user
   const av=document.getElementById('sb-av');
   av.textContent=CU.ini;av.style.background=CU.col;
@@ -2741,7 +2905,10 @@ function buildAccessPanel(){
             <div style="font-size:12px;font-weight:700;color:var(--text)">${u.name}</div>
             <div style="font-size:10px;color:var(--muted)">${u.email}</div>
           </div>
-          <button onclick="adminResetPass('${u.id}')" style="font-size:10px;font-weight:700;background:rgba(253,195,0,.12);color:var(--yellow);border:1px solid rgba(253,195,0,.3);border-radius:5px;padding:4px 10px;cursor:pointer;white-space:nowrap">Resetear ↗</button>
+          <div style="display:flex;gap:6px">
+            <button onclick="openEditUser('${u.id}')" style="font-size:10px;font-weight:700;background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--bord);border-radius:5px;padding:4px 10px;cursor:pointer">✏️ Editar</button>
+            <button onclick="adminResetPass('${u.id}')" style="font-size:10px;font-weight:700;background:rgba(253,195,0,.12);color:var(--yellow);border:1px solid rgba(253,195,0,.3);border-radius:5px;padding:4px 10px;cursor:pointer;white-space:nowrap">🔑 Resetear</button>
+          </div>
         </div>`).join('')}
       ${USERS.filter(u=>!u.email||u.email==='—').map(u=>`
         <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg3);border-radius:7px;border:1px solid var(--bord);opacity:.55">
@@ -2750,7 +2917,7 @@ function buildAccessPanel(){
             <div style="font-size:12px;font-weight:700;color:var(--text)">${u.name}</div>
             <div style="font-size:10px;color:var(--muted)">Sin correo — gestionar en Firebase Console</div>
           </div>
-          <span style="font-size:10px;color:var(--muted)">N/D</span>
+          <button onclick="openEditUser('${u.id}')" style="font-size:10px;font-weight:700;background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--bord);border-radius:5px;padding:4px 10px;cursor:pointer">✏️ Editar</button>
         </div>`).join('')}
     </div>
   </div>`;
@@ -3495,7 +3662,7 @@ function renderRutasCalendar(){
     const evs=byDay[d]||[];
     cells+=`<div class="cal-cell${isToday?' today':''}">
       <div class="cal-n${isToday?' today':''}">${d}</div>
-      ${evs.map(r=>`<div class="cal-pill" style="background:${RUTA_COLORS[r.tipo]||'#475569'};color:#fff" onclick="verRuta(${r.id})" title="${r.titulo}">${r.titulo}</div>`).join('')}
+      ${evs.map(r=>`<div class="cal-pill" style="background:${RUTA_COLORS[r.tipo]||'#475569'};color:#fff" onclick="verRuta(${r.id})" title="${r.titulo}${r.horaIni?' · '+r.horaIni+' – '+r.horaFin:''}">${r.titulo}${r.horaIni?`<div style="font-size:9px;opacity:.85">🕐 ${r.horaIni} – ${r.horaFin}</div>`:''}</div>`).join('')}
     </div>`;
   }
 
@@ -3526,15 +3693,18 @@ function crearRuta(){
   const titulo=document.getElementById('ruta-titulo').value.trim();
   const fecha=document.getElementById('ruta-fecha').value;
   const tipo=document.getElementById('ruta-tipo').value;
+  const horaIni=document.getElementById('ruta-hora-ini').value;
+  const horaFin=document.getElementById('ruta-hora-fin').value;
   const tiendas=document.getElementById('ruta-tiendas').value.trim();
   const notas=document.getElementById('ruta-notas').value.trim();
   if(!titulo||!fecha){alert('Completa el título y la fecha.');return;}
-  JARA_RUTAS.push({id:rutaSeq++,titulo,fecha,tipo,tiendas,notas});
+  if(!horaIni||!horaFin){alert('La hora de entrada y salida son obligatorias.');return;}
+  if(horaFin<=horaIni){alert('La hora de salida debe ser después de la entrada.');return;}
+  JARA_RUTAS.push({id:rutaSeq++,titulo,fecha,tipo,horaIni,horaFin,tiendas,notas});
   closeM('m-nueva-ruta');
-  ['ruta-titulo','ruta-fecha','ruta-tiendas','ruta-notas'].forEach(id=>{
+  ['ruta-titulo','ruta-fecha','ruta-hora-ini','ruta-hora-fin','ruta-tiendas','ruta-notas'].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value='';
   });
-  // Switch to the correct month in the calendar
   const rd=new Date(fecha+'T00:00:00');
   rutasViewMonth=rd.getMonth();
   rutasViewYear=rd.getFullYear();
@@ -3546,10 +3716,11 @@ function verRuta(id){
   if(!r) return;
   const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const rd=new Date(r.fecha+'T00:00:00');
+  const horaStr=r.horaIni&&r.horaFin?`\n🕐 Horario: ${r.horaIni} – ${r.horaFin}`:'';
   const detalle=`📍 ${r.titulo}
 Tipo: ${r.tipo}
-Fecha: ${rd.getDate()} de ${meses[rd.getMonth()]} ${rd.getFullYear()}
-${r.tiendas?'Tiendas: '+r.tiendas+'\n':''}${r.notas?'Notas: '+r.notas:''}`;
+Fecha: ${rd.getDate()} de ${meses[rd.getMonth()]} ${rd.getFullYear()}${horaStr}
+${r.tiendas?'Joyerías: '+r.tiendas+'\n':''}${r.notas?'Notas: '+r.notas:''}`;
   if(confirm(detalle+'\n\n¿Eliminar esta ruta?')){
     const idx=JARA_RUTAS.findIndex(x=>x.id===id);
     if(idx>-1) JARA_RUTAS.splice(idx,1);
