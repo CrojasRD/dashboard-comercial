@@ -1926,11 +1926,10 @@ function renderColorPicker(prefix,selectedColor){
 function renderNavCheckboxes(prefix,activeNav){
   return `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:4px">
     ${NU_NAV_SECTIONS.map(([k,lbl])=>`
-      <label style="display:flex;align-items:center;gap:7px;cursor:${k==='tablero'?'default':'pointer'};
+      <label for="${prefix}-nav-${k}" style="display:flex;align-items:center;gap:7px;cursor:${k==='tablero'?'default':'pointer'};
         font-size:11.5px;font-weight:500;color:var(--text);background:var(--bg3);border:1px solid var(--bord);
-        border-radius:7px;padding:7px 9px;transition:.12s;${activeNav.includes(k)?'border-color:var(--yellow);':''}"
-        onclick="if('${k}'!=='tablero') this.querySelector('input').click()">
-        <input type="checkbox" id="${prefix}-nav-${k}" value="${k}" ${activeNav.includes(k)?'checked':''} ${k==='tablero'?'disabled':''} style="accent-color:var(--yellow);width:14px;height:14px">
+        border-radius:7px;padding:7px 9px;transition:.12s;${activeNav.includes(k)?'border-color:var(--yellow);':''}">
+        <input type="checkbox" id="${prefix}-nav-${k}" value="${k}" ${activeNav.includes(k)?'checked':''} ${k==='tablero'?'disabled':''} style="accent-color:var(--yellow);width:14px;height:14px;flex-shrink:0">
         <span>${lbl}</span>
       </label>`).join('')}
   </div>`;
