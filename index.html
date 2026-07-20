@@ -1578,6 +1578,7 @@ const ADMINS = ['obueno','dchoez'];
 const CAN_ADD_PAUTA = ['obueno','dchoez','pmosquera'];
 const CAN_FILL_VENTAS = ['kescobar'];
 const CAN_MANAGE_EVENTS = ['obueno','dchoez','amolineros','mgarcia'];
+const CAN_MANAGE_PASS   = ['obueno','amolineros'];
 const FOTO_IDS = ['ipacheco','mmontoya'];
 
 // ════════════════════════════════════
@@ -2551,6 +2552,33 @@ function buildProfileCard(u, showExtra){
   </div>`;
 }
 
+function buildAccessPanel(){
+  return `<div class="dcard" style="padding:16px 20px;margin-bottom:20px">
+    <div style="font-size:12px;font-weight:800;color:var(--yellow);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px">🔑 Gestión de Accesos</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Envía un enlace de restablecimiento de contraseña a cualquier miembro del equipo.</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${USERS.filter(u=>u.email&&u.email!=='—').map(u=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg3);border-radius:7px;border:1px solid var(--bord)">
+          <div style="width:28px;height:28px;border-radius:50%;background:${u.col};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;flex-shrink:0">${u.ini}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:700;color:var(--text)">${u.name}</div>
+            <div style="font-size:10px;color:var(--muted)">${u.email}</div>
+          </div>
+          <button onclick="adminResetPass('${u.id}')" style="font-size:10px;font-weight:700;background:rgba(253,195,0,.12);color:var(--yellow);border:1px solid rgba(253,195,0,.3);border-radius:5px;padding:4px 10px;cursor:pointer;white-space:nowrap">Resetear ↗</button>
+        </div>`).join('')}
+      ${USERS.filter(u=>!u.email||u.email==='—').map(u=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg3);border-radius:7px;border:1px solid var(--bord);opacity:.55">
+          <div style="width:28px;height:28px;border-radius:50%;background:${u.col};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;flex-shrink:0">${u.ini}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:700;color:var(--text)">${u.name}</div>
+            <div style="font-size:10px;color:var(--muted)">Sin correo — gestionar en Firebase Console</div>
+          </div>
+          <span style="font-size:10px;color:var(--muted)">N/D</span>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+
 function renderPerfiles(){
   const isAdmin=ADMINS.includes(CU.id);
   const title=document.getElementById('perfiles-title');
@@ -2562,34 +2590,7 @@ function renderPerfiles(){
       ? buildProfileCard(sel,false)
       : buildTeamStats();
 
-    // Panel de gestión de accesos (solo admins)
-    const canManageAccess=['obueno','amolineros'].includes(CU.id);
-    const accessPanel=canManageAccess?`
-      <div class="dcard" style="padding:16px 20px;margin-bottom:20px">
-        <div style="font-size:12px;font-weight:800;color:var(--yellow);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px">🔑 Gestión de Accesos</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Envía un enlace de restablecimiento de contraseña a cualquier miembro del equipo.</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          ${USERS.filter(u=>u.email&&u.email!=='—').map(u=>`
-            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg3);border-radius:7px;border:1px solid var(--bord)">
-              <div style="width:28px;height:28px;border-radius:50%;background:${u.col};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;flex-shrink:0">${u.ini}</div>
-              <div style="flex:1;min-width:0">
-                <div style="font-size:12px;font-weight:700;color:var(--text)">${u.name}</div>
-                <div style="font-size:10px;color:var(--muted)">${u.email}</div>
-              </div>
-              <button onclick="adminResetPass('${u.id}')" style="font-size:10px;font-weight:700;background:rgba(253,195,0,.12);color:var(--yellow);border:1px solid rgba(253,195,0,.3);border-radius:5px;padding:4px 10px;cursor:pointer;white-space:nowrap">Resetear ↗</button>
-            </div>`).join('')}
-          ${USERS.filter(u=>!u.email||u.email==='—').map(u=>`
-            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg3);border-radius:7px;border:1px solid var(--bord);opacity:.55">
-              <div style="width:28px;height:28px;border-radius:50%;background:${u.col};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;flex-shrink:0">${u.ini}</div>
-              <div style="flex:1;min-width:0">
-                <div style="font-size:12px;font-weight:700;color:var(--text)">${u.name}</div>
-                <div style="font-size:10px;color:var(--muted)">Sin correo — gestionar en Firebase Console</div>
-              </div>
-              <span style="font-size:10px;color:var(--muted)">N/D</span>
-            </div>`).join('')}
-        </div>
-      </div>`:'';
-
+    const accessPanel=CAN_MANAGE_PASS.includes(CU.id)?buildAccessPanel():'';
     cont.innerHTML=`
       ${accessPanel}
       <div style="margin-bottom:20px">${statsPanel}</div>
@@ -2606,7 +2607,8 @@ function renderPerfiles(){
       </div>`;
   } else {
     title.textContent='Mi Perfil';
-    cont.innerHTML=buildProfileCard(CU,true);
+    const accessPanel=CAN_MANAGE_PASS.includes(CU.id)?buildAccessPanel():'';
+    cont.innerHTML=accessPanel+buildProfileCard(CU,true);
     renderMariela();
     if(FOTO_IDS.includes(CU.id)) renderTrabajoPeriodos(CU.id,'trabajo-list-'+CU.id);
     if(CU.id==='mgarcia') renderVisitasPeriodo();
