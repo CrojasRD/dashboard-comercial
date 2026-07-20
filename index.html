@@ -1624,7 +1624,7 @@ const USERS = [
 // Admins who can see ALL profiles and ALL data
 const ADMINS = ['obueno','dchoez'];
 const CAN_ADD_PAUTA = ['obueno','dchoez','pmosquera'];
-const CAN_FILL_VENTAS = ['kescobar'];
+function isVentasOnline(u){ return (u||CU)&&(u||CU).role==='Ventas Online'; }
 const CAN_MANAGE_EVENTS = ['obueno','dchoez','amolineros','mgarcia'];
 const CAN_MANAGE_PASS   = ['obueno','amolineros'];
 const FOTO_IDS = ['ipacheco','mmontoya'];
@@ -2265,7 +2265,7 @@ async function launchApp(){
   // Ventas: show register button only for kescobar
   const btnReg=document.getElementById('btn-reg-ventas');
   const btnImpV=document.getElementById('btn-import-ventas');
-  if(CAN_FILL_VENTAS.includes(CU.id)){btnReg.style.display='inline-flex';btnImpV.style.display='inline-flex';}
+  if(isVentasOnline(CU)){btnReg.style.display='inline-flex';btnImpV.style.display='inline-flex';}
   else {btnReg.style.display='none';btnImpV.style.display='none';}
 
   // Eventos: create button for CAN_MANAGE_EVENTS
@@ -2275,9 +2275,9 @@ async function launchApp(){
 
   // Joyas desglose: button only for kescobar
   const btnJEd=document.getElementById('th-j-edit');
-  if(btnJEd) btnJEd.style.display=CAN_FILL_VENTAS.includes(CU.id)?'table-cell':'none';
+  if(btnJEd) btnJEd.style.display=isVentasOnline(CU)?'table-cell':'none';
   const joyasBtns=document.getElementById('joyas-btns');
-  if(joyasBtns) joyasBtns.style.display=CAN_FILL_VENTAS.includes(CU.id)?'flex':'none';
+  if(joyasBtns) joyasBtns.style.display=isVentasOnline(CU)?'flex':'none';
 
   // Pauteo: show add/import buttons only for social/admins
   const canPauta=CAN_ADD_PAUTA.includes(CU.id);
@@ -2419,7 +2419,7 @@ function renderDashboard(){
 
   // Ventas line chart (for kescobar / admins)
   let ventasBlock='';
-  if(VENTAS_MONTHLY.length>0 && (ADMINS.includes(CU.id)||CU.id==='kescobar'||CU.id==='mgarcia')){
+  if(VENTAS_MONTHLY.length>0 && (ADMINS.includes(CU.id)||isVentasOnline(CU)||CU.id==='mgarcia')){
     const last6=VENTAS_MONTHLY.slice(-6);
     const maxV=Math.max(...last6.map(v=>v.total));
     const W=260,H=80,pad=4;
@@ -2451,7 +2451,7 @@ function renderDashboard(){
 
   // Gramos trend (for ventas users)
   let gramosBlock='';
-  if(VENTAS_MONTHLY.length>0 && (ADMINS.includes(CU.id)||CU.id==='kescobar'||CU.id==='mgarcia')){
+  if(VENTAS_MONTHLY.length>0 && (ADMINS.includes(CU.id)||isVentasOnline(CU)||CU.id==='mgarcia')){
     const last6=VENTAS_MONTHLY.slice(-6);
     const avgG=(last6.reduce((a,v)=>a+(v.gramos||0),0)/last6.length).toFixed(0);
     const maxG=Math.max(...last6.map(v=>v.gramos||0))||1;
@@ -2518,6 +2518,13 @@ function parseTaskDate(str){
 }
 function getVis(){
   if(ADMINS.includes(CU?.id)) return TASKS;
+  // Ventas Online users see all tasks in their dept
+  if(isVentasOnline(CU)){
+    const depts=DEPT_VIS[CU.id]||['Ventas Online'];
+    return TASKS.filter(t=>depts.includes(t.dept)||t.aId===CU.id);
+  }
+  const depts=DEPT_VIS[CU.id];
+  if(depts) return TASKS.filter(t=>depts.includes(t.dept)||t.aId===CU.id);
   return TASKS.filter(t=>t.aId===CU.id);
 }
 const MES_ABBR=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
