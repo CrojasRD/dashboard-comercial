@@ -1805,10 +1805,21 @@ async function doLogin(){
   let u=USERS.find(x=>x.id===uid);
   let email=u&&u.email&&u.email!=='—'?u.email:null;
   if(!email){
+    // 1) Try directory collection (legacy fallback)
     try{
       const dirDoc=await db.collection('directory').doc(uid).get();
       if(dirDoc.exists) email=dirDoc.data().email;
-    }catch(e){ /* directorio no disponible */ }
+    }catch(e){}
+  }
+  if(!email){
+    // 2) Try content/users (dynamic users created via admin panel)
+    try{
+      const usersDoc=await db.collection('content').doc('users').get();
+      if(usersDoc.exists){
+        const found=(usersDoc.data().items||[]).find(x=>x.id===uid);
+        if(found&&found.email&&found.email!=='—') email=found.email;
+      }
+    }catch(e){}
   }
   if(!email){err.textContent='Usuario o contraseña incorrectos.';err.style.display='block';document.getElementById('l-pass').value='';return;}
   if(btn){btn.disabled=true;btn.textContent='Ingresando…';}
@@ -2038,7 +2049,8 @@ async function createNewUser(){
         throw authErr;
       }
     }
-    await db.collection('directory').doc(uid).set({email});
+    // directory write skipped (Firestore rules don't allow it)
+    // email is stored in content/users and looked up at login via that path
     const usersDoc=await db.collection('content').doc('users').get();
     const currentItems=usersDoc.exists?(usersDoc.data().items||[]):[];
     await db.collection('content').doc('users').set({items:[...currentItems.filter(u=>u.id!==uid),newUser]});
