@@ -883,6 +883,62 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
   </div>
 </div>
 
+<!-- MODAL: CREAR USUARIO -->
+<div class="overlay" id="m-create-user">
+  <div class="modal" style="width:500px;max-width:96vw">
+    <div class="mhead"><span class="mtitle">👤 Crear Nuevo Usuario</span><button class="mclose" onclick="closeM('m-create-user')">✕</button></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="fg">
+        <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:4px">Nombre completo *</label>
+        <input type="text" id="nu-name" placeholder="Ej: María López" oninput="nuAutoFill()" style="width:100%;background:var(--bg3);border:1px solid var(--bord);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px">
+      </div>
+      <div class="fg">
+        <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:4px">ID de usuario * <span style="font-weight:400;text-transform:none">(para iniciar sesión)</span></label>
+        <input type="text" id="nu-id" placeholder="Ej: mlopez" style="width:100%;background:var(--bg3);border:1px solid var(--bord);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px">
+      </div>
+      <div class="fg">
+        <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:4px">Correo electrónico *</label>
+        <input type="email" id="nu-email" placeholder="mlopez@orocash.ec" style="width:100%;background:var(--bg3);border:1px solid var(--bord);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px">
+      </div>
+      <div class="fg">
+        <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:4px">Contraseña inicial *</label>
+        <input type="text" id="nu-pass" placeholder="Mínimo 6 caracteres" style="width:100%;background:var(--bg3);border:1px solid var(--bord);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px">
+      </div>
+      <div class="fg">
+        <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:4px">Rol / Cargo</label>
+        <input type="text" id="nu-role" placeholder="Ej: Diseñadora" style="width:100%;background:var(--bg3);border:1px solid var(--bord);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px">
+      </div>
+      <div class="fg">
+        <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:4px">Iniciales</label>
+        <input type="text" id="nu-ini" maxlength="3" placeholder="Ej: ML" style="width:100%;background:var(--bg3);border:1px solid var(--bord);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px">
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:8px">Color de avatar</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="nu-colors">
+        ${['#0c3260','#1a4f96','#2563eb','#7c3aed','#be185d','#dc2626','#d97706','#b45309','#16a34a','#059669','#0284c7','#0891b2','#475569'].map((c,i)=>`
+          <div onclick="nuSelectColor('${c}')" id="nuc-${c.replace('#','')}" style="width:24px;height:24px;border-radius:50%;background:${c};cursor:pointer;border:2px solid transparent;transition:.12s"></div>`).join('')}
+      </div>
+      <input type="hidden" id="nu-color" value="#2563eb">
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:8px">Acceso a secciones</label>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+        ${[['tablero','📊 Tablero'],['proyectos','📁 Proyectos'],['eventos','🗓 Eventos'],['camion','🚚 Camión'],['perfiles','👥 Perfiles'],['ventas','💰 Ventas'],['social','📱 Social Media'],['pauteo','📋 Contenido'],['presupuesto','💼 Presupuesto'],['fotografia','📷 Fotografía'],['vitrinimos','🪟 Vitrinismo'],['joyas','💎 Joyas']].map(([k,lbl])=>`
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--text);background:var(--bg3);border:1px solid var(--bord);border-radius:6px;padding:5px 8px">
+            <input type="checkbox" id="nu-nav-${k}" value="${k}" ${k==='tablero'?'checked disabled':''}> ${lbl}
+          </label>`).join('')}
+      </div>
+    </div>
+    <div id="nu-err" style="color:#f87171;font-size:12px;margin-bottom:10px;display:none"></div>
+    <div id="nu-ok" style="color:#4ade80;font-size:12px;margin-bottom:10px;display:none"></div>
+    <div class="mbtns">
+      <button class="mbsubmit" id="btn-create-user" onclick="createNewUser()">Crear usuario</button>
+      <button class="mbcancel" onclick="closeM('m-create-user')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: CAMBIAR CONTRASEÑA -->
 <div class="overlay" id="m-change-pass">
   <div class="modal" style="width:380px;max-width:96vw">
@@ -1813,6 +1869,124 @@ function logout(){
 }
 
 // ════════════════════════════════════
+// GESTIÓN DE USUARIOS (CREAR)
+// ════════════════════════════════════
+let _secondaryApp=null;
+function getSecondaryAuth(){
+  if(!_secondaryApp){
+    _secondaryApp=firebase.apps.find(a=>a.name==='secondary')||firebase.initializeApp(firebaseConfig,'secondary');
+  }
+  return _secondaryApp.auth();
+}
+
+function openCreateUser(){
+  // Reset form
+  ['nu-name','nu-id','nu-email','nu-pass','nu-role','nu-ini'].forEach(id=>document.getElementById(id).value='');
+  document.querySelectorAll('#nu-colors div').forEach(d=>d.style.borderColor='transparent');
+  nuSelectColor('#2563eb');
+  document.querySelectorAll('#nu-nav-tablero,#nu-nav-proyectos,#nu-nav-eventos,#nu-nav-camion,#nu-nav-perfiles,#nu-nav-ventas,#nu-nav-social,#nu-nav-pauteo,#nu-nav-presupuesto,#nu-nav-fotografia,#nu-nav-vitrinimos,#nu-nav-joyas').forEach(cb=>{if(cb.id!=='nu-nav-tablero')cb.checked=false;});
+  document.getElementById('nu-err').style.display='none';
+  document.getElementById('nu-ok').style.display='none';
+  document.getElementById('btn-create-user').disabled=false;
+  document.getElementById('btn-create-user').textContent='Crear usuario';
+  openM('m-create-user');
+}
+
+function nuSelectColor(c){
+  document.getElementById('nu-color').value=c;
+  document.querySelectorAll('#nu-colors div').forEach(d=>d.style.borderColor='transparent');
+  const el=document.getElementById('nuc-'+c.replace('#',''));
+  if(el) el.style.borderColor='#fff';
+}
+
+function nuAutoFill(){
+  const name=document.getElementById('nu-name').value.trim();
+  if(!name) return;
+  const parts=name.split(/\s+/);
+  // Auto ID: first letter of first name + last name, lowercase
+  const idEl=document.getElementById('nu-id');
+  if(!idEl.value){
+    const suggestion=(parts[0][0]+(parts[1]||'')).toLowerCase().replace(/[^a-z0-9]/g,'');
+    idEl.value=suggestion;
+  }
+  // Auto iniciales
+  const iniEl=document.getElementById('nu-ini');
+  if(!iniEl.value){
+    iniEl.value=parts.map(p=>p[0]).join('').toUpperCase().slice(0,2);
+  }
+  // Auto email
+  const emailEl=document.getElementById('nu-email');
+  if(!emailEl.value && document.getElementById('nu-id').value){
+    emailEl.value=document.getElementById('nu-id').value+'@orocash.ec';
+  }
+}
+
+async function createNewUser(){
+  const err=document.getElementById('nu-err');
+  const ok=document.getElementById('nu-ok');
+  const btn=document.getElementById('btn-create-user');
+  err.style.display='none';ok.style.display='none';
+
+  const name=document.getElementById('nu-name').value.trim();
+  const uid=document.getElementById('nu-id').value.trim().toLowerCase().replace(/\s+/g,'');
+  const email=document.getElementById('nu-email').value.trim();
+  const pass=document.getElementById('nu-pass').value;
+  const role=document.getElementById('nu-role').value.trim()||'Colaborador';
+  const ini=document.getElementById('nu-ini').value.trim().toUpperCase()||uid.slice(0,2).toUpperCase();
+  const col=document.getElementById('nu-color').value||'#2563eb';
+
+  if(!name){err.textContent='El nombre es obligatorio.';err.style.display='block';return;}
+  if(!uid||uid.length<2){err.textContent='El ID de usuario debe tener al menos 2 caracteres.';err.style.display='block';return;}
+  if(USERS.find(u=>u.id===uid)){err.textContent='Ya existe un usuario con ese ID.';err.style.display='block';return;}
+  if(!email||!email.includes('@')){err.textContent='Ingresa un correo válido.';err.style.display='block';return;}
+  if(pass.length<6){err.textContent='La contraseña debe tener al menos 6 caracteres.';err.style.display='block';return;}
+
+  // Nav sections
+  const navKeys=['tablero','proyectos','eventos','camion','perfiles','ventas','social','pauteo','presupuesto','fotografia','vitrinimos','joyas'];
+  const nav=navKeys.filter(k=>{const cb=document.getElementById('nu-nav-'+k);return cb&&cb.checked;});
+  if(!nav.includes('tablero')) nav.unshift('tablero');
+
+  btn.disabled=true;btn.textContent='Creando...';
+  try{
+    // Create Firebase Auth user via secondary app (doesn't log out current admin)
+    const secAuth=getSecondaryAuth();
+    await secAuth.createUserWithEmailAndPassword(email,pass);
+    await secAuth.signOut();
+
+    // Save email to directory for login lookup
+    await db.collection('directory').doc(uid).set({email});
+
+    // Build user object
+    const newUser={id:uid,name,role,ini,col,badge:false,email,nav};
+
+    // Persist to content/users (merges into USERS on next login)
+    const usersDoc=await db.collection('content').doc('users').get();
+    const currentItems=usersDoc.exists?(usersDoc.data().items||[]):[];
+    // Remove if already exists (shouldn't, but just in case)
+    const updated=[...currentItems.filter(u=>u.id!==uid),newUser];
+    await db.collection('content').doc('users').set({items:updated});
+
+    // Also add to in-memory USERS immediately
+    USERS.push(newUser);
+
+    ok.textContent=`✅ Usuario "${name}" creado exitosamente. ID de login: ${uid}`;
+    ok.style.display='block';
+    btn.textContent='¡Creado!';
+    renderPerfiles();
+    setTimeout(()=>closeM('m-create-user'),2500);
+  }catch(e){
+    btn.disabled=false;btn.textContent='Crear usuario';
+    const msgs={
+      'auth/email-already-in-use':'Ya existe una cuenta con ese correo en Firebase.',
+      'auth/invalid-email':'El correo no es válido.',
+      'auth/weak-password':'La contraseña es muy débil (mínimo 6 caracteres).',
+    };
+    err.textContent='❌ '+(msgs[e.code]||e.message);
+    err.style.display='block';
+  }
+}
+
+// ════════════════════════════════════
 // GESTIÓN DE CONTRASEÑAS
 // ════════════════════════════════════
 function openChangePass(){
@@ -2554,7 +2728,10 @@ function buildProfileCard(u, showExtra){
 
 function buildAccessPanel(){
   return `<div class="dcard" style="padding:16px 20px;margin-bottom:20px">
-    <div style="font-size:12px;font-weight:800;color:var(--yellow);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px">🔑 Gestión de Accesos</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:800;color:var(--yellow);text-transform:uppercase;letter-spacing:.8px">🔑 Gestión de Accesos</div>
+      <button onclick="openCreateUser()" style="font-size:11px;font-weight:700;background:var(--yellow);color:#000;border:none;border-radius:6px;padding:5px 12px;cursor:pointer">+ Crear usuario</button>
+    </div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Envía un enlace de restablecimiento de contraseña a cualquier miembro del equipo.</div>
     <div style="display:flex;flex-direction:column;gap:8px">
       ${USERS.filter(u=>u.email&&u.email!=='—').map(u=>`
