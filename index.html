@@ -433,6 +433,7 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
       </div>
     </nav>
     <div class="sb-bottom">
+      <button class="btn-logout" onclick="openChangePass()" style="margin-bottom:4px">🔑 Cambiar contraseña</button>
       <button class="btn-logout" onclick="logout()">← Cerrar sesión</button>
     </div>
   </aside>
@@ -877,6 +878,33 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
       <div style="display:flex;gap:8px">
         <button class="mbcancel" onclick="csvBack2()">← Atrás</button>
         <button class="mbsubmit" id="csv-confirm-btn" onclick="csvConfirmImport()">✅ Confirmar Importación</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CAMBIAR CONTRASEÑA -->
+<div class="overlay" id="m-change-pass">
+  <div class="modal" style="width:380px;max-width:96vw">
+    <div class="mhead"><span class="mtitle">🔑 Cambiar Contraseña</span><button class="mclose" onclick="closeM('m-change-pass')">✕</button></div>
+    <div style="padding:0 2px">
+      <div class="fg" style="margin-bottom:12px">
+        <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:4px">Contraseña actual</label>
+        <input type="password" id="cp-current" placeholder="••••••••" style="width:100%;background:var(--bg3);border:1px solid var(--bord);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px">
+      </div>
+      <div class="fg" style="margin-bottom:12px">
+        <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:4px">Nueva contraseña</label>
+        <input type="password" id="cp-new" placeholder="Mínimo 6 caracteres" style="width:100%;background:var(--bg3);border:1px solid var(--bord);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px">
+      </div>
+      <div class="fg" style="margin-bottom:16px">
+        <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:4px">Confirmar nueva contraseña</label>
+        <input type="password" id="cp-confirm" placeholder="Repite la nueva contraseña" style="width:100%;background:var(--bg3);border:1px solid var(--bord);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px">
+      </div>
+      <div id="cp-err" style="color:#f87171;font-size:12px;margin-bottom:10px;display:none"></div>
+      <div id="cp-ok" style="color:#4ade80;font-size:12px;margin-bottom:10px;display:none">✅ Contraseña actualizada correctamente.</div>
+      <div class="mbtns">
+        <button class="mbsubmit" onclick="doChangePass()">Guardar contraseña</button>
+        <button class="mbcancel" onclick="closeM('m-change-pass')">Cancelar</button>
       </div>
     </div>
   </div>
@@ -1542,7 +1570,7 @@ const USERS = [
   {id:'kescobar',  name:'Katherine Escobar',role:'Ventas Online',          ini:'KE',col:'#0284c7', badge:false,email:'gventas1@orocash.ec', nav:['tablero','eventos','ventas','joyas','perfiles']},
   {id:'emendoza',  name:'Eddy Mendoza',     role:'Publicidad Móvil',       ini:'EM',col:'#475569', badge:false,     email:'emendoza@orocash.ec', nav:['tablero','eventos','camion','perfiles']},
   {id:'mmontoya',  name:'Miguel Montoya',   role:'Fotografía',             ini:'MM',col:'#b45309', badge:false,   email:'—',                   nav:['tablero','eventos','fotografia','perfiles']},
-  {id:'jjara',     name:'Jaqueline Jara',   role:'Vitrinismo',             ini:'JJ',col:'#be185d', badge:false,email:'—',                   nav:['tablero','eventos','vitrinimos','perfiles']},
+  {id:'jjara',     name:'Jaqueline Jara',   role:'Vitrinismo',             ini:'JJ',col:'#be185d', badge:false,email:'jjara@orocash.ec',      nav:['tablero','eventos','vitrinimos','perfiles']},
 ];
 
 // Admins who can see ALL profiles and ALL data
@@ -1781,6 +1809,73 @@ function logout(){
   document.getElementById('l-pass').value='';
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
   document.getElementById('s-login').classList.add('on');
+}
+
+// ════════════════════════════════════
+// GESTIÓN DE CONTRASEÑAS
+// ════════════════════════════════════
+function openChangePass(){
+  document.getElementById('cp-current').value='';
+  document.getElementById('cp-new').value='';
+  document.getElementById('cp-confirm').value='';
+  const err=document.getElementById('cp-err');
+  const ok=document.getElementById('cp-ok');
+  err.style.display='none';
+  ok.style.display='none';
+  openM('m-change-pass');
+}
+
+async function doChangePass(){
+  const current=document.getElementById('cp-current').value;
+  const nw=document.getElementById('cp-new').value;
+  const confirm=document.getElementById('cp-confirm').value;
+  const err=document.getElementById('cp-err');
+  const ok=document.getElementById('cp-ok');
+  err.style.display='none';
+  ok.style.display='none';
+
+  if(!current){err.textContent='Ingresa tu contraseña actual.';err.style.display='block';return;}
+  if(nw.length<6){err.textContent='La nueva contraseña debe tener al menos 6 caracteres.';err.style.display='block';return;}
+  if(nw!==confirm){err.textContent='Las contraseñas no coinciden.';err.style.display='block';return;}
+
+  try{
+    const user=auth.currentUser;
+    const cred=firebase.auth.EmailAuthProvider.credential(user.email,current);
+    await user.reauthenticateWithCredential(cred);
+    await user.updatePassword(nw);
+    ok.style.display='block';
+    setTimeout(()=>closeM('m-change-pass'),2000);
+  }catch(e){
+    const msg={
+      'auth/wrong-password':'La contraseña actual es incorrecta.',
+      'auth/too-many-requests':'Demasiados intentos. Espera un momento.',
+      'auth/weak-password':'La nueva contraseña es muy débil.',
+    };
+    err.textContent=msg[e.code]||('Error: '+e.message);
+    err.style.display='block';
+  }
+}
+
+// Admin: enviar email de reset a un usuario
+async function adminResetPass(uid){
+  const u=USERS.find(x=>x.id===uid);
+  if(!u){return;}
+  if(!u.email||u.email==='—'){
+    alert('Este usuario no tiene correo registrado. Restablece su contraseña desde la Consola de Firebase.');
+    return;
+  }
+  const ok=confirm(`¿Enviar enlace de restablecimiento de contraseña a ${u.email}?`);
+  if(!ok) return;
+  try{
+    await auth.sendPasswordResetEmail(u.email);
+    alert(`✅ Correo de restablecimiento enviado a ${u.email}`);
+  }catch(e){
+    const msg={
+      'auth/user-not-found':'No se encontró una cuenta con ese correo en Firebase.',
+      'auth/invalid-email':'El correo del usuario no es válido.',
+    };
+    alert('❌ '+(msg[e.code]||e.message));
+  }
 }
 
 // ════════════════════════════════════
@@ -2466,7 +2561,37 @@ function renderPerfiles(){
     const statsPanel=sel
       ? buildProfileCard(sel,false)
       : buildTeamStats();
+
+    // Panel de gestión de accesos (solo admins)
+    const canManageAccess=['obueno','amolineros'].includes(CU.id);
+    const accessPanel=canManageAccess?`
+      <div class="dcard" style="padding:16px 20px;margin-bottom:20px">
+        <div style="font-size:12px;font-weight:800;color:var(--yellow);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px">🔑 Gestión de Accesos</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Envía un enlace de restablecimiento de contraseña a cualquier miembro del equipo.</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${USERS.filter(u=>u.email&&u.email!=='—').map(u=>`
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg3);border-radius:7px;border:1px solid var(--bord)">
+              <div style="width:28px;height:28px;border-radius:50%;background:${u.col};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;flex-shrink:0">${u.ini}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:700;color:var(--text)">${u.name}</div>
+                <div style="font-size:10px;color:var(--muted)">${u.email}</div>
+              </div>
+              <button onclick="adminResetPass('${u.id}')" style="font-size:10px;font-weight:700;background:rgba(253,195,0,.12);color:var(--yellow);border:1px solid rgba(253,195,0,.3);border-radius:5px;padding:4px 10px;cursor:pointer;white-space:nowrap">Resetear ↗</button>
+            </div>`).join('')}
+          ${USERS.filter(u=>!u.email||u.email==='—').map(u=>`
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg3);border-radius:7px;border:1px solid var(--bord);opacity:.55">
+              <div style="width:28px;height:28px;border-radius:50%;background:${u.col};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;flex-shrink:0">${u.ini}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:700;color:var(--text)">${u.name}</div>
+                <div style="font-size:10px;color:var(--muted)">Sin correo — gestionar en Firebase Console</div>
+              </div>
+              <span style="font-size:10px;color:var(--muted)">N/D</span>
+            </div>`).join('')}
+        </div>
+      </div>`:'';
+
     cont.innerHTML=`
+      ${accessPanel}
       <div style="margin-bottom:20px">${statsPanel}</div>
       <div class="team-grid">${USERS.map(u=>`
         <div class="team-card" onclick="selectTeamProfile('${u.id}')" style="cursor:pointer;border:1px solid ${selectedProfileId===u.id?'var(--yellow)':'var(--bord)'};transition:.15s">
