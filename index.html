@@ -570,7 +570,16 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
             <span style="font-size:13px;font-weight:700;color:var(--yellow)">📅 Registro de Actividades del Camión</span>
             <button class="btn-add" onclick="openM('m-camion-actividad')">+ Registrar actividad</button>
           </div>
-          <div id="camion-act-list"></div>
+          <div class="tabs" id="camion-act-tabs" style="margin-bottom:16px">
+            <div class="tab on" onclick="camionActTab('calendario',this)">📅 Calendario</div>
+            <div class="tab" onclick="camionActTab('lista',this)">📋 Lista</div>
+          </div>
+          <div id="camion-act-cal-panel">
+            <div id="camion-act-cal"></div>
+          </div>
+          <div id="camion-act-list-panel" style="display:none">
+            <div id="camion-act-list"></div>
+          </div>
         </div>
       </div>
 
@@ -1498,12 +1507,17 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
 <div class="overlay" id="m-camion-actividad">
   <div class="modal">
     <div class="mhead"><span class="mtitle">🚚 Registrar Actividad del Camión</span><button class="mclose" onclick="closeM('m-camion-actividad')">✕</button></div>
-    <div class="fg"><label>Descripción de la actividad</label><input id="cam-desc" placeholder="Ej: Recorrido zona norte, entrega material..."></div>
+    <div class="fg"><label>Descripción de la actividad *</label><input id="cam-desc" placeholder="Ej: Recorrido zona norte, entrega material..."></div>
     <div class="fg-2">
-      <div class="fg"><label>Fecha inicio</label><input id="cam-inicio" type="date"></div>
+      <div class="fg"><label>Fecha inicio *</label><input id="cam-inicio" type="date"></div>
       <div class="fg"><label>Fecha fin</label><input id="cam-fin" type="date"></div>
     </div>
-    <div class="fg"><label>Notas adicionales</label><textarea id="cam-notas" rows="3" placeholder="Observaciones, rutas, responsable..."></textarea></div>
+    <div class="fg-2">
+      <div class="fg"><label>Hora de salida</label><input id="cam-hora-ini" type="time"></div>
+      <div class="fg"><label>Hora de regreso</label><input id="cam-hora-fin" type="time"></div>
+    </div>
+    <div class="fg"><label>Zona / Ruta</label><input id="cam-zona" placeholder="Ej: Norte – Samborondón, Sur – Durán..."></div>
+    <div class="fg"><label>Notas adicionales</label><textarea id="cam-notas" rows="2" placeholder="Observaciones, kilómetros, responsable..."></textarea></div>
     <div class="mbtns">
       <button class="mbcancel" onclick="closeM('m-camion-actividad')">Cancelar</button>
       <button class="mbsubmit" onclick="guardarCamionActividad()">Guardar</button>
@@ -4399,17 +4413,35 @@ function checkChecklistAlerts(){
 // ════════════════════════════════════
 // CAMIÓN ACTIVIDADES
 // ════════════════════════════════════
+let camionActCalM=new Date().getMonth();
+let camionActCalY=new Date().getFullYear();
+
+function camionActTab(name,el){
+  document.querySelectorAll('#camion-act-tabs .tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('camion-act-cal-panel').style.display=name==='calendario'?'':'none';
+  document.getElementById('camion-act-list-panel').style.display=name==='lista'?'':'none';
+}
+
 function guardarCamionActividad(){
   const desc=document.getElementById('cam-desc').value.trim();
   const fi=document.getElementById('cam-inicio').value;
   const ff=document.getElementById('cam-fin').value;
+  const horaIni=document.getElementById('cam-hora-ini').value;
+  const horaFin=document.getElementById('cam-hora-fin').value;
+  const zona=document.getElementById('cam-zona').value.trim();
   if(!desc||!fi){alert('Descripción y fecha de inicio son obligatorias.');return;}
-  CAMION_ACTIVIDADES.push({id:camionActSeq++,desc,fInicio:fi,fFin:ff||fi,notas:document.getElementById('cam-notas').value.trim()});
-  ['cam-desc','cam-inicio','cam-fin','cam-notas'].forEach(id=>document.getElementById(id).value='');
+  CAMION_ACTIVIDADES.push({id:camionActSeq++,desc,fInicio:fi,fFin:ff||fi,horaIni,horaFin,zona,notas:document.getElementById('cam-notas').value.trim()});
+  ['cam-desc','cam-inicio','cam-fin','cam-hora-ini','cam-hora-fin','cam-zona','cam-notas'].forEach(id=>document.getElementById(id).value='');
   closeM('m-camion-actividad');
-  renderCamionActividades();
+  // Navigate calendar to the activity's month
+  const rd=new Date(fi+'T00:00:00');
+  camionActCalM=rd.getMonth();camionActCalY=rd.getFullYear();
+  renderCamionActividades();persistCamion();
 }
+
 function renderCamionActividades(){
+  renderCamionActCalendar();
   const el=document.getElementById('camion-act-list');
   if(!el) return;
   if(CAMION_ACTIVIDADES.length===0){
@@ -4423,19 +4455,89 @@ function renderCamionActividades(){
         <div style="font-size:13px;font-weight:700;color:var(--text)">${a.desc}</div>
         <div style="font-size:11px;color:var(--yellow);margin-top:3px">
           ${fmtDate(a.fInicio)}${a.fFin&&a.fFin!==a.fInicio?' → '+fmtDate(a.fFin):''}
-          ${a.fFin&&a.fFin!==a.fInicio?' <span style="color:var(--muted)">('+diasEntre(a.fInicio,a.fFin)+' días)</span>':''}
+          ${a.horaIni?` · 🕐 ${a.horaIni}${a.horaFin?' – '+a.horaFin:''}`:'' }
         </div>
-        ${a.notas?`<div style="font-size:11.5px;color:var(--muted);margin-top:4px">${a.notas}</div>`:''}
+        ${a.zona?`<div style="font-size:11.5px;color:var(--cyan);margin-top:3px">📍 ${a.zona}</div>`:''}
+        ${a.notas?`<div style="font-size:11.5px;color:var(--muted);margin-top:3px">${a.notas}</div>`:''}
       </div>
       <button onclick="deleteCamionAct(${a.id})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:14px;flex-shrink:0">🗑</button>
     </div>`).join('');
 }
+
+function renderCamionActCalendar(){
+  const el=document.getElementById('camion-act-cal');
+  if(!el) return;
+  const y=camionActCalY,m=camionActCalM;
+  const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const today=new Date();today.setHours(0,0,0,0);
+  const first=new Date(y,m,1);
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const startDow=first.getDay();
+
+  // Map each day → activities active on that day
+  const byDay={};
+  CAMION_ACTIVIDADES.forEach(a=>{
+    const s=new Date(a.fInicio+'T00:00:00');
+    const e=new Date((a.fFin||a.fInicio)+'T00:00:00');
+    for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1)){
+      if(d.getMonth()===m&&d.getFullYear()===y){
+        const day=d.getDate();
+        if(!byDay[day]) byDay[day]=[];
+        byDay[day].push(a);
+      }
+    }
+  });
+
+  const DAYS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  let cells=DAYS.map(d=>`<div style="text-align:center;font-size:10px;font-weight:700;color:var(--muted);padding:5px 0">${d}</div>`).join('');
+  for(let i=0;i<startDow;i++) cells+='<div></div>';
+  for(let d=1;d<=daysInMonth;d++){
+    const isToday=d===today.getDate()&&m===today.getMonth()&&y===today.getFullYear();
+    const acts=byDay[d]||[];
+    cells+=`<div class="cal-cell${isToday?' today':''}">
+      <div class="cal-n${isToday?' today':''}">${d}</div>
+      ${acts.map(a=>`<div class="cal-pill" style="background:#0c4a6e;color:#7dd3fc;font-size:10px;cursor:pointer"
+        onclick="verCamionActDet(${a.id})" title="${a.desc}${a.horaIni?' · '+a.horaIni+(a.horaFin?' – '+a.horaFin:''):''}"
+        >🚚 ${a.desc}</div>`).join('')}
+    </div>`;
+  }
+
+  if(CAMION_ACTIVIDADES.length===0){
+    el.innerHTML=`<div style="text-align:center;padding:32px;color:var(--muted);font-size:12.5px">Sin actividades este mes. Registra la primera actividad.</div>`;
+    return;
+  }
+
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <button onclick="navCamionActCal(-1)" class="btn-sm-out" style="font-size:12px;padding:5px 12px">← Anterior</button>
+      <span style="font-weight:700;font-size:14px;color:var(--text)">${MESES[m]} ${y}</span>
+      <button onclick="navCamionActCal(1)" class="btn-sm-out" style="font-size:12px;padding:5px 12px">Siguiente →</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">${cells}</div>`;
+}
+
+function navCamionActCal(d){
+  camionActCalM+=d;
+  if(camionActCalM<0){camionActCalM=11;camionActCalY--;}
+  else if(camionActCalM>11){camionActCalM=0;camionActCalY++;}
+  renderCamionActCalendar();
+}
+
+function verCamionActDet(id){
+  const a=CAMION_ACTIVIDADES.find(x=>x.id===id);
+  if(!a) return;
+  const horaStr=a.horaIni?`\n🕐 Horario: ${a.horaIni}${a.horaFin?' – '+a.horaFin:''}`:' ';
+  const det=`🚚 ${a.desc}
+📅 ${fmtDate(a.fInicio)}${a.fFin&&a.fFin!==a.fInicio?' → '+fmtDate(a.fFin):''}${horaStr}${a.zona?'\n📍 '+a.zona:''}${a.notas?'\n📝 '+a.notas:''}`;
+  if(confirm(det+'\n\n¿Eliminar esta actividad?')){
+    deleteCamionAct(id);
+  }
+}
+
 function deleteCamionAct(id){
-  if(!confirm('¿Eliminar esta actividad?'))return;
-  const idx=CAMION_ACTIVIDADES.findIndex(x=>x.id===id);
-  if(idx>=0) CAMION_ACTIVIDADES.splice(idx,1);
-  renderCamionActividades();
-  persistCamion();
+  if(!CAMION_ACTIVIDADES.find(x=>x.id===id)) return;
+  CAMION_ACTIVIDADES.splice(CAMION_ACTIVIDADES.findIndex(x=>x.id===id),1);
+  renderCamionActividades();persistCamion();
 }
 
 // ════════════════════════════════════
