@@ -1828,7 +1828,7 @@ async function doLogin(){
   if(!email){
     // 2) Try content/users (dynamic users created via admin panel)
     try{
-      const usersDoc=await db.collection('content').doc('users').get();
+      const usersDoc=await db.collection('content').doc('members').get();
       if(usersDoc.exists){
         const found=(usersDoc.data().items||[]).find(x=>x.id===uid);
         if(found&&found.email&&found.email!=='—') email=found.email;
@@ -1847,7 +1847,7 @@ async function doLogin(){
   err.style.display='none';
   if(!u){
     try{
-      const usersDoc=await db.collection('content').doc('users').get();
+      const usersDoc=await db.collection('content').doc('members').get();
       const remote=(usersDoc.exists?(usersDoc.data().items||[]):[]).find(x=>x.id===uid);
       if(remote){USERS.push(remote);u=remote;}
     }catch(e){ /* ignore */ }
@@ -2065,9 +2065,9 @@ async function createNewUser(){
     }
     // directory write skipped (Firestore rules don't allow it)
     // email is stored in content/users and looked up at login via that path
-    const usersDoc=await db.collection('content').doc('users').get();
+    const usersDoc=await db.collection('content').doc('members').get();
     const currentItems=usersDoc.exists?(usersDoc.data().items||[]):[];
-    await db.collection('content').doc('users').set({items:[...currentItems.filter(u=>u.id!==uid),newUser]});
+    await db.collection('content').doc('members').set({items:[...currentItems.filter(u=>u.id!==uid),newUser]});
     USERS.push(newUser);
     ok.textContent=`✅ Usuario "${name}" creado. ID de login: ${uid}`;
     ok.style.display='block';
@@ -2143,9 +2143,9 @@ async function saveEditUser(){
   Object.assign(u,{name,email,role,ini,col,nav});
   try{
     if(email&&email!=='—') await db.collection('directory').doc(uid).set({email},{merge:true});
-    const usersDoc=await db.collection('content').doc('users').get();
+    const usersDoc=await db.collection('content').doc('members').get();
     const currentItems=usersDoc.exists?(usersDoc.data().items||[]):[];
-    await db.collection('content').doc('users').set({items:[...currentItems.filter(x=>x.id!==uid),{id:uid,name,email,role,ini,col,badge:u.badge,nav}]});
+    await db.collection('content').doc('members').set({items:[...currentItems.filter(x=>x.id!==uid),{id:uid,name,email,role,ini,col,badge:u.badge,nav}]});
     ok.textContent='✅ Perfil actualizado correctamente.';
     ok.style.display='block';
     renderPerfiles();
@@ -4884,7 +4884,7 @@ async function loadAllData(){
       db.collection('content').doc('proyectos').get(),
       db.collection('content').doc('jara').get(),
       db.collection('content').doc('mariela').get(),
-      db.collection('content').doc('users').get(),
+      db.collection('content').doc('members').get(),
       db.collection('content').doc('trabajo').get(),
       db.collection('content').doc('presupuesto').get(),
       db.collection('content').doc('joyas').get(),
