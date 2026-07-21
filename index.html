@@ -577,7 +577,10 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
       <div class="view" id="v-eventos">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
           <span class="view-title" style="margin:0">Eventos Comerciales</span>
-          <button class="btn-add" id="btn-nuevo-evento" onclick="openMEvento(false)">+ Nuevo Evento</button>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn-sm-out" id="btn-import-eventos" onclick="openM('m-csv-eventos')" style="font-size:12px;padding:6px 12px;display:none">⬆ Importar masivo</button>
+            <button class="btn-add" id="btn-nuevo-evento" onclick="openMEvento(false)">+ Nuevo Evento</button>
+          </div>
         </div>
         <div class="tabs" id="ev-tabs">
           <div class="tab on" onclick="evTab('calendario',this)">📅 Calendario</div>
@@ -1613,6 +1616,52 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
   </div>
 </div>
 
+<!-- MODAL: IMPORTAR EVENTOS CSV -->
+<div class="overlay" id="m-csv-eventos">
+  <div class="modal" style="width:680px;max-width:96vw">
+    <div class="mhead"><span class="mtitle">⬆ Importar Eventos desde CSV</span><button class="mclose" onclick="cevReset();closeM('m-csv-eventos')">✕</button></div>
+    <div id="cev-step1">
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px">
+        Sube un archivo CSV con las cantonizaciones u otros eventos.<br>
+        Columnas esperadas: <strong style="color:var(--yellow)">Título, Tipo, Fecha, Responsable</strong>
+        <span style="display:block;margin-top:6px;font-size:11px">Tipos válidos: <em>EVENTO, ACTIVACIÓN, POP-UP, MOVILIZACIÓN</em> (si no se indica, se usa EVENTO)</span>
+      </p>
+      <div id="cev-drop" style="border:2px dashed var(--bord);border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:.15s"
+        onclick="document.getElementById('cev-file').click()"
+        ondragover="event.preventDefault();this.style.borderColor='var(--yellow)'"
+        ondragleave="this.style.borderColor='var(--bord)'"
+        ondrop="cevDrop(event)">
+        <div style="font-size:28px;margin-bottom:8px">📂</div>
+        <div style="font-size:13px;font-weight:700">Arrastra tu CSV o haz clic</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Archivo .csv</div>
+      </div>
+      <input type="file" id="cev-file" accept=".csv" style="display:none" onchange="cevRead(this)">
+      <div id="cev-error" style="color:var(--red);font-size:12px;margin-top:8px;display:none"></div>
+    </div>
+    <div id="cev-step2" style="display:none">
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:12px">Asigna las columnas de tu CSV a cada campo:</div>
+      <div id="cev-mapper" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px"></div>
+      <div style="display:flex;gap:8px">
+        <button class="mbcancel" onclick="cevBack()">← Atrás</button>
+        <button class="mbsubmit" onclick="cevPreview()">Vista previa →</button>
+      </div>
+    </div>
+    <div id="cev-step3" style="display:none">
+      <div style="font-size:12px;font-weight:700;margin-bottom:10px" id="cev-summary"></div>
+      <div style="max-height:300px;overflow-y:auto;margin-bottom:14px">
+        <table class="ctable" style="font-size:11.5px">
+          <thead><tr><th>Título</th><th>Tipo</th><th>Fecha</th><th>Responsable</th></tr></thead>
+          <tbody id="cev-preview"></tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="mbcancel" onclick="cevBack2()">← Atrás</button>
+        <button class="mbsubmit" onclick="cevConfirm()">✅ Importar eventos</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: CREDENCIALES -->
 <div class="overlay" id="m-creds">
   <div class="modal" style="width:560px;max-width:95vw;">
@@ -2334,6 +2383,7 @@ async function launchApp(){
   const canEvt=CAN_MANAGE_EVENTS.includes(CU.id)||ADMINS.includes(CU.id);
   document.getElementById('btn-nuevo-evento').style.display=canEvt?'inline-flex':'none';
   document.getElementById('btn-nuevo-movil').style.display=canEvt?'inline-flex':'none';
+  document.getElementById('btn-import-eventos').style.display=canEvt?'inline-flex':'none';
 
   // Joyas desglose: button only for kescobar
   const btnJEd=document.getElementById('th-j-edit');
@@ -3923,6 +3973,133 @@ function ctaskConfirm(){
   document.getElementById('ctask-file').value='';
   renderKanban();renderDashboard();
   alert(`✅ ${preview.length} tareas importadas correctamente.`);
+}
+
+// ════════════════════════════════════
+// CSV IMPORT — EVENTOS
+// ════════════════════════════════════
+let cevRows=[], cevHeaders=[], cevMapping={};
+const CEV_FIELDS=[
+  {key:'title', label:'Título',      req:true},
+  {key:'tipo',  label:'Tipo',        req:false},
+  {key:'fecha', label:'Fecha',       req:true},
+  {key:'person',label:'Responsable', req:false},
+];
+const CEV_SYNS={
+  title: ['titulo','título','title','nombre','evento','cantonización','canton'],
+  tipo:  ['tipo','type','categoria','categoría'],
+  fecha: ['fecha','date','dia','día','when'],
+  person:['responsable','persona','assigned','asignado','encargado'],
+};
+const TIPO_VALID={
+  'evento':'EVENTO','activación':'ACTIVACIÓN','activacion':'ACTIVACIÓN',
+  'pop-up':'POP-UP','popup':'POP-UP','movilización':'MOVILIZACIÓN','movilizacion':'MOVILIZACIÓN',
+};
+
+function cevReset(){
+  ['cev-step2','cev-step3'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('cev-step1').style.display='block';
+  document.getElementById('cev-file').value='';
+  document.getElementById('cev-error').style.display='none';
+  cevRows=[];cevHeaders=[];cevMapping={};
+}
+function cevDrop(e){
+  e.preventDefault();document.getElementById('cev-drop').style.borderColor='var(--bord)';
+  const f=e.dataTransfer.files[0];if(f)processCevFile(f);
+}
+function cevRead(input){const f=input.files[0];if(f)processCevFile(f);}
+function processCevFile(file){
+  if(!file.name.endsWith('.csv')){
+    document.getElementById('cev-error').textContent='Debe ser un archivo .csv';
+    document.getElementById('cev-error').style.display='block';return;
+  }
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const parsed=parseCSV(e.target.result);
+      if(parsed.length<2){
+        document.getElementById('cev-error').textContent='El archivo no tiene datos suficientes.';
+        document.getElementById('cev-error').style.display='block';return;
+      }
+      cevHeaders=parsed[0];
+      cevRows=parsed.slice(1).filter(r=>r.some(c=>c.trim()));
+      buildCevMapper();
+    }catch(err){
+      document.getElementById('cev-error').textContent='Error: '+err.message;
+      document.getElementById('cev-error').style.display='block';
+    }
+  };
+  reader.readAsText(file,'UTF-8');
+}
+function buildCevMapper(){
+  const autoMap={};
+  cevHeaders.forEach((h,i)=>{
+    const hl=h.toLowerCase().trim();
+    Object.entries(CEV_SYNS).forEach(([field,syns])=>{if(syns.some(s=>hl.includes(s)))autoMap[field]=i;});
+  });
+  cevMapping={...autoMap};
+  document.getElementById('cev-step1').style.display='none';
+  document.getElementById('cev-step2').style.display='block';
+  document.getElementById('cev-mapper').innerHTML=CEV_FIELDS.map(f=>`
+    <div class="vf-field">
+      <label>${f.label}${f.req?' <span style="color:var(--red)">*</span>':''}</label>
+      <select id="cevmap-${f.key}" style="width:100%;background:var(--bg3);border:1px solid var(--bord);color:var(--text);padding:8px 11px;border-radius:7px;font-size:12.5px"
+        onchange="cevMapping['${f.key}']=this.value===''?null:parseInt(this.value)">
+        <option value="">— Sin asignar —</option>
+        ${cevHeaders.map((h,i)=>`<option value="${i}" ${autoMap[f.key]===i?'selected':''}>${h}</option>`).join('')}
+      </select>
+    </div>`).join('');
+}
+function cevBack(){document.getElementById('cev-step2').style.display='none';document.getElementById('cev-step1').style.display='block';}
+function cevBack2(){document.getElementById('cev-step3').style.display='none';document.getElementById('cev-step2').style.display='block';}
+function cevPreview(){
+  CEV_FIELDS.forEach(f=>{const s=document.getElementById('cevmap-'+f.key);if(s)cevMapping[f.key]=s.value===''?null:parseInt(s.value);});
+  if(cevMapping.title==null){alert('Debes asignar la columna Título.');return;}
+  if(cevMapping.fecha==null){alert('Debes asignar la columna Fecha.');return;}
+  const preview=cevRows.map(row=>{
+    const title=(row[cevMapping.title]||'').trim();
+    if(!title)return null;
+    const rawFecha=(cevMapping.fecha!=null?row[cevMapping.fecha]||'':'').trim();
+    const fecha=normDate(rawFecha);
+    if(!fecha)return null;
+    const rawTipo=(cevMapping.tipo!=null?row[cevMapping.tipo]||'':'').toLowerCase().trim();
+    const tipo=TIPO_VALID[rawTipo]||'EVENTO';
+    const rawPerson=(cevMapping.person!=null?row[cevMapping.person]||'':'').trim();
+    const matchedUser=rawPerson?USERS.find(u=>u.name.toLowerCase().includes(rawPerson.toLowerCase())):null;
+    const person=matchedUser?matchedUser.name:(rawPerson||CU.name);
+    return {title, tipo, fecha, person};
+  }).filter(Boolean);
+  window._cevPreview=preview;
+  const invalid=cevRows.length-preview.length;
+  document.getElementById('cev-summary').innerHTML=
+    `<span style="color:var(--green)">✅ ${preview.length} evento${preview.length!==1?'s':''} listos para importar</span>`+
+    (invalid>0?` <span style="color:var(--muted);font-size:11px">(${invalid} filas sin fecha válida ignoradas)</span>`:'');
+  document.getElementById('cev-preview').innerHTML=preview.map(ev=>`
+    <tr>
+      <td style="font-weight:600">${ev.title}</td>
+      <td style="color:var(--muted)">${ev.tipo}</td>
+      <td style="color:var(--muted)">${fmtDate(ev.fecha)}</td>
+      <td>${ev.person}</td>
+    </tr>`).join('');
+  document.getElementById('cev-step2').style.display='none';
+  document.getElementById('cev-step3').style.display='block';
+}
+function cevConfirm(){
+  const preview=window._cevPreview||[];
+  preview.forEach(ev=>{
+    const evId=eventSeq++;
+    ALL_EVENTS.push({
+      id:evId, title:ev.title, loc:'—', date:ev.fecha,
+      person:ev.person, budget:'—', type:ev.tipo,
+      cls:TIPO_CLS[ev.tipo]||'pill-evento',
+      typeCls:TIPO_BG[ev.tipo]||'bg-blue',
+      forCamion:false, participantes:[],
+    });
+  });
+  persistEventos();
+  renderCalendar('eventos-layout',calY,calM,false);
+  cevReset();closeM('m-csv-eventos');
+  alert(`✅ ${preview.length} eventos importados al calendario.`);
 }
 
 // ════════════════════════════════════
