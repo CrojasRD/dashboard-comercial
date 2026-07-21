@@ -3086,7 +3086,7 @@ function downloadReport(uid){
 // VENTAS
 // ════════════════════════════════════
 function renderVentas(){
-  const canEdit=CAN_FILL_VENTAS.includes(CU?.id);
+  const canEdit=isVentasOnline(CU);
   // Show/hide edit column header
   const thEdit=document.getElementById('th-v-edit');
   if(thEdit) thEdit.style.display=canEdit?'table-cell':'none';
@@ -4145,7 +4145,7 @@ function diasEntre(a,b){return Math.round((new Date(b)-new Date(a))/(86400000))+
 const TIPOS_JOYA=['anillos','aretes','cadenas','dijes','pulseras','lingotes','monedas','reloj'];
 function navTo_joyas(){ renderJoyas(); }
 function renderJoyas(){
-  const canEdit=CAN_FILL_VENTAS.includes(CU?.id);
+  const canEdit=isVentasOnline(CU);
   // KPIs totales
   const totales={};
   TIPOS_JOYA.forEach(t=>totales[t]=VENTAS_DESGLOSE.reduce((s,r)=>s+(r[t]||0),0));
