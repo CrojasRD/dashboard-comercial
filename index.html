@@ -353,6 +353,45 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
 .legend-val{margin-left:auto;font-weight:700;}
 .line-svg{width:100%;overflow:visible;}
 .dash-empty{text-align:center;padding:30px 10px;color:var(--muted);font-size:12px;}
+
+/* TASK CARD — assignment + date */
+.tassign{font-size:10.5px;margin-bottom:7px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
+.tassign-by{color:var(--muted);}
+.tassign-arr{color:var(--bord);}
+.tassign-to{color:var(--cyan);font-weight:700;}
+.tdate-pill{font-size:10.5px;color:var(--yellow);background:rgba(253,195,0,.08);padding:2px 7px;border-radius:4px;font-weight:600;}
+
+/* SIDEBAR HAMBURGER */
+.sb-toggle{display:none;align-items:center;justify-content:center;background:none;
+  border:1px solid var(--bord);color:var(--text);width:34px;height:34px;border-radius:8px;
+  cursor:pointer;font-size:18px;flex-shrink:0;}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:90;}
+.sidebar-overlay.open{display:block;}
+
+/* RESPONSIVE */
+@media(max-width:820px){
+  :root{--sw:0px;}
+  .sb-toggle{display:flex;}
+  .sidebar{transform:translateX(-200px);transition:transform .22s ease;z-index:101;
+    position:fixed;top:0;bottom:0;width:172px;}
+  .sidebar.open{transform:translateX(0);}
+  .content{margin-left:0!important;}
+  .main{padding:12px 10px;}
+  .topbar{padding:0 10px;gap:8px;}
+  .kcols{grid-template-columns:1fr!important;}
+  .fg-2{grid-template-columns:1fr!important;}
+  .kpi-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));}
+  .dash-grid{grid-template-columns:1fr!important;}
+  .perfil-stats{grid-template-columns:repeat(2,1fr)!important;}
+  .sc-n{font-size:18px!important;}
+  .statsbar .sc{padding:7px 5px;}
+  .statsbar .sc-l{font-size:8px;letter-spacing:.5px;}
+  .team-grid{grid-template-columns:1fr 1fr!important;}
+  .filter-bar{gap:5px;}
+  .lbox{width:92vw;padding:32px 22px;}
+  .cal-cell{min-height:70px;padding:4px 5px;}
+  .cal-dlbl{font-size:9px;padding:6px 1px 5px;}
+}
 </style>
 </head>
 <body>
@@ -435,9 +474,11 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
       <button class="btn-logout" onclick="logout()">← Cerrar sesión</button>
     </div>
   </aside>
+  <div class="sidebar-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
 
   <div class="content">
     <div class="topbar">
+      <button class="sb-toggle" onclick="toggleSidebar()" title="Menú">☰</button>
       <button class="btn-back" onclick="logout()">← Perfiles</button>
       <div class="top-av" id="top-av"></div>
       <div>
@@ -2346,6 +2387,7 @@ function applyNavAccess(){
 // NAV
 // ════════════════════════════════════
 function navTo(view,el){
+  closeSidebar();
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
   if(el)el.classList.add('on');
@@ -2356,6 +2398,14 @@ function navTo(view,el){
   if(view==='camion') renderCamionActividades();
   if(view==='fotografia') renderFotografiaView();
   if(view==='social') renderGestor();
+}
+function toggleSidebar(){
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sb-overlay').classList.toggle('open');
+}
+function closeSidebar(){
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sb-overlay').classList.remove('open');
 }
 
 // ════════════════════════════════════
@@ -2576,13 +2626,19 @@ function renderKanban(){
         const sn=t.assignee.split(' ');const sh=sn[0]+(sn[1]?' '+sn[1][0]+'.':'');
         // Non-admins can't drag vencida cards; admins can drag all
         const draggable=isAdmin||(t.status!=='vencida');
+        const assignorName=t.porNombre?t.porNombre.split(' ')[0]:'—';
+        const assigneeSh=sn[0]+(sn[1]?' '+sn[1][0]+'.':'');
         return `<div class="tcard" ${draggable?'draggable="true"':''} style="${t.status==='vencida'?'border-left:3px solid var(--red);':''}"
           ${draggable?`ondragstart="dragStart(event,${t.id})" ondragend="dragEnd(this)"`:''}
           onclick="openDetail(${t.id})">
-          <div class="tdept" style="color:${dc}">${t.dept.toUpperCase()}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <div class="tdept" style="color:${dc};margin:0">${t.dept.toUpperCase()}</div>
+            <span class="tprio" style="background:${PCOL[t.prio]}"></span>
+          </div>
           <div class="ttitle">${t.title}</div>
           <div class="tdesc">${t.desc}</div>
-          <div class="tfooter"><span class="tdate">📅 ${t.date}${t.horaInicio?` · ${t.horaInicio}${t.horaFin?' – '+t.horaFin:''}`:''}</span><span class="tperson">${sh}</span><span class="tprio" style="background:${PCOL[t.prio]}"></span></div>
+          <div class="tassign"><span class="tassign-by">✍️ ${assignorName}</span><span class="tassign-arr">→</span><span class="tassign-to">👤 ${assigneeSh}</span></div>
+          <div class="tfooter"><span class="tdate-pill">📅 ${t.date}${t.horaInicio?` · ${t.horaInicio}${t.horaFin?' – '+t.horaFin:''}`:''}</span></div>
         </div>`;}).join('')}</div></div>`;
   }).join('');
 }
@@ -2623,7 +2679,8 @@ function openDetail(id){
   document.getElementById('md-title').textContent=t.title;
   document.getElementById('md-desc').textContent=t.desc;
   const horaStr=t.horaInicio?` · ⏰ ${t.horaInicio}${t.horaFin?' – '+t.horaFin:''}`:'';
-  document.getElementById('md-chips').innerHTML=`<span class="dchip">📅 ${t.date}${horaStr}</span><span class="dchip">👤 ${t.assignee}</span><span class="dchip">${PLBL[t.prio]}</span>`;
+  const porStr=t.porNombre?`<span class="dchip">✍️ Por: ${t.porNombre}</span>`:'';
+  document.getElementById('md-chips').innerHTML=`<span class="dchip">📅 ${t.date}${horaStr}</span><span class="dchip">👤 Para: ${t.assignee}</span>${porStr}<span class="dchip">${PLBL[t.prio]}</span>`;
   const canChange=ADMINS.includes(CU?.id)||(t.status!=='vencida');
   const sm={pendiente:'🔲 Pendiente',en_progreso:'🔄 En Progreso',completado:'✅ Completado'};
   if(ADMINS.includes(CU?.id)) sm.vencida='⚠️ Vencida';
@@ -2656,7 +2713,8 @@ function createTask(){
   const horaFin=document.getElementById('t-hora-fin').value;
   TASKS.push({id:taskSeq++,title,desc:document.getElementById('t-des').value.trim()||'—',
     dept:document.getElementById('t-dept').value,assignee:aName,aId:sel.value,
-    date:df,dateRaw:dr,horaInicio:horaIni,horaFin:horaFin,prio:document.getElementById('t-prio').value,status:'pendiente'});
+    date:df,dateRaw:dr,horaInicio:horaIni,horaFin:horaFin,prio:document.getElementById('t-prio').value,status:'pendiente',
+    por:CU.id,porNombre:CU.name});
   document.getElementById('t-tit').value='';document.getElementById('t-des').value='';
   document.getElementById('t-date').value='';document.getElementById('t-hora-ini').value='';document.getElementById('t-hora-fin').value='';
   closeM('m-task');renderKanban();persistTasks();
