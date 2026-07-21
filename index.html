@@ -2589,13 +2589,6 @@ function parseTaskDate(str){
 }
 function getVis(){
   if(ADMINS.includes(CU?.id)) return TASKS;
-  // Ventas Online users see all tasks in their dept
-  if(isVentasOnline(CU)){
-    const depts=DEPT_VIS[CU.id]||['Ventas Online'];
-    return TASKS.filter(t=>depts.includes(t.dept)||t.aId===CU.id);
-  }
-  const depts=DEPT_VIS[CU.id];
-  if(depts) return TASKS.filter(t=>depts.includes(t.dept)||t.aId===CU.id);
   return TASKS.filter(t=>t.aId===CU.id);
 }
 const MES_ABBR=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
