@@ -4065,9 +4065,11 @@ function cevPreview(){
     const rawTipo=(cevMapping.tipo!=null?row[cevMapping.tipo]||'':'').toLowerCase().trim();
     const tipo=TIPO_VALID[rawTipo]||'EVENTO';
     const rawPerson=(cevMapping.person!=null?row[cevMapping.person]||'':'').trim();
-    const matchedUser=rawPerson?USERS.find(u=>u.name.toLowerCase().includes(rawPerson.toLowerCase())):null;
-    const person=matchedUser?matchedUser.name:(rawPerson||CU.name);
-    return {title, tipo, fecha, person};
+    const names=rawPerson?rawPerson.split(/[,;\/]/).map(s=>s.trim()).filter(Boolean):[];
+    const matchedUsers=names.map(n=>USERS.find(u=>u.name.toLowerCase().includes(n.toLowerCase()))).filter(Boolean);
+    const person=matchedUsers.length?matchedUsers.map(u=>u.name).join(', '):(rawPerson||CU.name);
+    const participantes=matchedUsers.map(u=>({id:u.id,name:u.name}));
+    return {title, tipo, fecha, person, participantes};
   }).filter(Boolean);
   window._cevPreview=preview;
   const invalid=cevRows.length-preview.length;
@@ -4088,12 +4090,17 @@ function cevConfirm(){
   const preview=window._cevPreview||[];
   preview.forEach(ev=>{
     const evId=eventSeq++;
+    const parts=ev.participantes||[];
     ALL_EVENTS.push({
       id:evId, title:ev.title, loc:'—', date:ev.fecha,
       person:ev.person, budget:'—', type:ev.tipo,
       cls:TIPO_CLS[ev.tipo]||'pill-evento',
       typeCls:TIPO_BG[ev.tipo]||'bg-blue',
-      forCamion:false, participantes:[],
+      forCamion:false, participantes:parts,
+    });
+    parts.forEach(p=>{
+      NOTIFICACIONES.push({id:notifSeq++,userId:p.id,eventoId:evId,
+        mensaje:`Fuiste asignado al evento "${ev.title}" el ${fmtDate(ev.fecha)}.`,leida:false});
     });
   });
   persistEventos();
