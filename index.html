@@ -481,7 +481,6 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
   <div class="content">
     <div class="topbar">
       <button class="sb-toggle" onclick="toggleSidebar()" title="Menú">☰</button>
-      <button class="btn-back" onclick="logout()">← Perfiles</button>
       <div class="top-av" id="top-av"></div>
       <div>
         <div style="display:flex;align-items:center;gap:7px;">
@@ -1703,6 +1702,16 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+
+// Restaurar sesión al refrescar la página
+auth.onAuthStateChanged(async function(fbUser){
+  if(!fbUser) return; // no hay sesión, se queda en login
+  if(CU) return;      // ya lanzó la app (login manual)
+  const u=USERS.find(u=>u.email===fbUser.email);
+  if(!u){ await auth.signOut(); return; }
+  CU=u;
+  await launchApp();
+});
 
 // ════════════════════════════════════
 // USERS
