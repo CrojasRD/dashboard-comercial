@@ -649,6 +649,16 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
         <div id="vt-exhibidores">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
             <input class="sinput" type="text" placeholder="🔍 Buscar tienda..." oninput="JARA_EXHIB_SEARCH=this.value;renderJaraExhibidores()" style="min-width:220px">
+            <select onchange="JARA_EXHIB_FILTER=this.value;renderJaraExhibidores()" style="background:var(--bg3);border:1px solid var(--bord);color:var(--text);padding:6px 10px;border-radius:7px;font-size:12px;cursor:pointer">
+              <option value="todas">📋 Todas</option>
+              <option value="con">✅ Con exhibidores</option>
+              <option value="sin">❌ Sin exhibidores</option>
+            </select>
+            <select onchange="JARA_EXHIB_SORT=this.value;renderJaraExhibidores()" style="background:var(--bg3);border:1px solid var(--bord);color:var(--text);padding:6px 10px;border-radius:7px;font-size:12px;cursor:pointer">
+              <option value="az">🔤 A → Z</option>
+              <option value="mayor">⬇ Mayor cantidad</option>
+              <option value="menor">⬆ Menor cantidad</option>
+            </select>
             <span id="jara-exhib-total" style="font-size:11px;color:var(--muted)"></span>
             <button class="mbsubmit" onclick="saveExhibidores()" style="margin-left:auto;padding:7px 16px;font-size:12px">💾 Guardar cambios</button>
             <span id="jara-save-msg" style="font-size:11px;color:var(--green)"></span>
@@ -3144,6 +3154,8 @@ function buildTeamStats(){
 // Jara exhibidores: {cod, nom, cantidad, obs}
 let JARA_EXHIBIDORES={};  // keyed by store cod
 let JARA_EXHIB_SEARCH='';
+let JARA_EXHIB_FILTER='todas'; // todas|con|sin
+let JARA_EXHIB_SORT='az';      // az|mayor|menor
 let JARA_RUTAS=[];  // {id,titulo,fecha,tipo,tiendas,notas}
 let rutaSeq=1;
 let rutasViewMonth=new Date().getMonth();
@@ -3602,7 +3614,14 @@ function initEventoModal(){
 // ════════════════════════════════════
 function renderJaraExhibidores(){
   const q=JARA_EXHIB_SEARCH.toLowerCase();
-  const stores=TIENDAS.filter(t=>!q||t.cod.toLowerCase().includes(q)||t.nom.toLowerCase().includes(q));
+  let stores=TIENDAS.filter(t=>!q||t.cod.toLowerCase().includes(q)||t.nom.toLowerCase().includes(q));
+  // Filtro con/sin exhibidores
+  if(JARA_EXHIB_FILTER==='con') stores=stores.filter(t=>(JARA_EXHIBIDORES[t.cod]?.cant||0)>0);
+  else if(JARA_EXHIB_FILTER==='sin') stores=stores.filter(t=>!(JARA_EXHIBIDORES[t.cod]?.cant||0));
+  // Ordenar
+  if(JARA_EXHIB_SORT==='mayor') stores=[...stores].sort((a,b)=>(JARA_EXHIBIDORES[b.cod]?.cant||0)-(JARA_EXHIBIDORES[a.cod]?.cant||0));
+  else if(JARA_EXHIB_SORT==='menor') stores=[...stores].sort((a,b)=>(JARA_EXHIBIDORES[a.cod]?.cant||0)-(JARA_EXHIBIDORES[b.cod]?.cant||0));
+  else stores=[...stores].sort((a,b)=>a.nom.localeCompare(b.nom));
   const total=Object.values(JARA_EXHIBIDORES).reduce((a,v)=>a+(v.cant||0),0);
   const totalDan=Object.values(JARA_EXHIBIDORES).reduce((a,v)=>a+(v.dañados||0),0);
   const conEx=Object.values(JARA_EXHIBIDORES).filter(v=>v.cant>0).length;
