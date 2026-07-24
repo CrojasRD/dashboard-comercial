@@ -707,7 +707,7 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
             <div class="vf-field"><label>Ventas Totales ($)</label><input id="v-total" type="number" placeholder="0.00"></div>
             <div class="vf-field"><label>N° Joyas Vendidas</label><input id="v-pedidos" type="number" placeholder="0"></div>
             <div class="vf-field"><label>Ticket Promedio ($)</label><input id="v-ticket" type="number" placeholder="0.00"></div>
-            <div class="vf-field"><label>Conversión (%)</label><input id="v-conv" type="number" placeholder="0.0" step="0.1"></div>
+            <div class="vf-field"><label>Promedio de Meta (%)</label><input id="v-conv" type="number" placeholder="0.0" step="0.1"></div>
             <div class="vf-field"><label>Gramos Vendidos</label><input id="v-gramos" type="number" placeholder="0"></div>
           </div>
           <div style="display:flex;gap:9px;">
@@ -1389,7 +1389,7 @@ table.dt{width:100%;border-collapse:collapse;font-size:12.5px;}
     <!-- STEP 1: Upload -->
     <div id="cv-step1">
       <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px">
-        El CSV debe tener columnas: <strong>Mes, Año, Ventas, Joyas, Ticket, Conversión, Gramos</strong>.<br>
+        El CSV debe tener columnas: <strong>Mes, Año, Ventas, Joyas, Ticket, Promedio de Meta, Gramos</strong>.<br>
         También acepta exportaciones de Notion con esos campos (en cualquier idioma).
       </p>
       <div id="cv-drop" onclick="document.getElementById('cv-file').click()"
@@ -3250,7 +3250,7 @@ function renderVentas(){
       <div class="kpi"><div class="kpi-lbl">Gramos Mes</div><div class="kpi-val" style="color:var(--teal)">${last.gramos||0}g</div><div class="kpi-sub">Prom. ${gPerPedido}g/joya</div></div>
       <div class="kpi"><div class="kpi-lbl">Prom. Gramos Vendidos</div><div class="kpi-val" style="color:var(--cyan)">${avgG}g</div></div>
       <div class="kpi"><div class="kpi-lbl">Ticket Prom.</div><div class="kpi-val" style="color:var(--yellow)">$${last.ticket}</div></div>
-      <div class="kpi"><div class="kpi-lbl">Conversión</div><div class="kpi-val" style="color:var(--purple)">${last.conv}%</div></div>`;
+      <div class="kpi"><div class="kpi-lbl">Promedio de Meta</div><div class="kpi-val" style="color:var(--purple)">${last.conv}%</div></div>`;
   } else {
     kpis.innerHTML=`<div style="color:var(--muted);font-size:13px">Sin datos registrados aún.</div>`;
   }
