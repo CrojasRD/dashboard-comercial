@@ -1860,7 +1860,7 @@ const PROYECTOS = [
   {name:'Material POP Tienda Centro',dept:'Diseño',resp:'Gustavo Palma',ini:'18 jun',fin:'05 jul',avance:55,status:'En Curso'},
   {name:'Reporte Visual Zona Norte',dept:'Vitrinismo',resp:'Jaqueline Jara',ini:'20 jun',fin:'27 jun',avance:70,status:'En Curso'},
 ];
-const PSTATUS = {'En Curso':'bg-yellow','Por Cerrar':'bg-green','Preproducción':'bg-blue','Confirmado':'bg-purple','Inicio':'bg-grey'};
+const PSTATUS = {'En Curso':'bg-yellow','Por Cerrar':'bg-green','Preproducción':'bg-blue','Confirmado':'bg-purple','Inicio':'bg-grey','Completado':'bg-green','Cancelado':'bg-grey'};
 
 const ALL_EVENTS = [
   {id:1,title:'Activación Plaza Mayor',loc:'Plaza Mayor, Guayaquil',date:'2026-06-28',person:'Angel Molineros',budget:'$800',type:'ACTIVACIÓN',cls:'pill-activacion',typeCls:'bg-purple',forCamion:false},
@@ -2818,8 +2818,16 @@ function renderProyectos(){
     <td>${p.resp}</td><td style="color:var(--muted)">${p.ini}</td><td style="color:var(--muted)">${p.fin}</td>
     <td><div style="display:flex;align-items:center;gap:7px;">
       <div class="prog-bar"><div class="prog-fill" style="width:${p.avance}%;background:${avC[p.avance]||'var(--yellow)'}"></div></div>
-      <span style="font-size:11px;color:var(--muted)">${p.avance}%</span></div></td>
-    <td><span class="badge ${PSTATUS[p.status]||'bg-grey'}">${p.status}</span></td>
+      ${canProj
+        ? `<input type="number" min="0" max="100" value="${p.avance}" onchange="updateProjAvance(${i},this.value)" style="width:46px;background:var(--bg3);border:1px solid var(--bord);color:var(--text);padding:3px 5px;border-radius:5px;font-size:11px;text-align:center">%`
+        : `<span style="font-size:11px;color:var(--muted)">${p.avance}%</span>`
+      }</div></td>
+    <td>${canProj
+      ? `<select onchange="updateProjStatus(${i},this.value)" style="background:var(--bg3);border:1px solid var(--bord);color:var(--text);padding:4px 8px;border-radius:7px;font-size:12px;cursor:pointer">
+          ${['Inicio','Preproducción','En Curso','Confirmado','Por Cerrar','Completado','Cancelado'].map(s=>`<option value="${s}"${p.status===s?' selected':''}>${s}</option>`).join('')}
+        </select>`
+      : `<span class="badge ${PSTATUS[p.status]||'bg-grey'}">${p.status}</span>`
+    }</td>
     <td style="display:${canProj?'table-cell':'none'}">
       <button onclick="deleteProj(${i})" style="background:none;border:1px solid var(--bord);color:var(--red);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:11px">🗑</button>
     </td></tr>`).join('');
@@ -2827,6 +2835,17 @@ function renderProyectos(){
 function deleteProj(i){
   if(!confirm('¿Eliminar este proyecto?')) return;
   PROYECTOS.splice(i,1);
+  renderProyectos();persistProyectos();
+}
+function updateProjStatus(i,val){
+  if(!PROYECTOS[i]) return;
+  PROYECTOS[i].status=val;
+  if(val==='Completado') PROYECTOS[i].avance=100;
+  renderProyectos();persistProyectos();
+}
+function updateProjAvance(i,val){
+  if(!PROYECTOS[i]) return;
+  PROYECTOS[i].avance=Math.min(100,Math.max(0,parseInt(val)||0));
   renderProyectos();persistProyectos();
 }
 function createProj(){
